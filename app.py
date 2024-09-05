@@ -144,7 +144,6 @@ def register():
     return render_template('register.html', form=form)
 
 @app.route('/dashboard', methods=['GET', 'POST'])
-@login_required
 def dashboard():
     if request.method == 'POST':
         ticker = request.form['ticker']
@@ -192,7 +191,6 @@ def dashboard():
     return render_template('dashboard.html', stocks=stock_data, portfolio_return=portfolio_return)
 
 @app.route('/delete', methods=['POST'])
-@login_required
 def delete():
     ticker = request.form['ticker']
     stock = Stock.query.filter_by(ticker=ticker, user_id=current_user.id).first()
