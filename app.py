@@ -56,6 +56,12 @@ def calculate_portfolio_return(stocks_data):
     portfolio_return = ((total_current_value - total_investment) / total_investment) * 100
     return portfolio_return
 
+def calculate_portfolio_return_withdiv(stocks_data):
+    total_investment = sum(stock.purchase_price * stock.shares for stock in stocks_data)
+    total_current_value = sum(stock.latest_price * stock.shares for stock in stocks_data)
+    total_div = sum(stock.latest_price * stock.div_yield for stock in stocks_data)
+    portfolio_return_withdiv = ((total_current_value + total_div - total_investment) / total_investment) * 100
+    return portfolio_return_withdiv
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -154,6 +160,7 @@ def dashboard():
         return_performance = calculate_returns(purchase_price, latest_price)
         forward_pe = fetch_forwardPE(ticker)
         div_yield = fetch_divyiled(ticker)
+        return_performance_withdiv = calculate_portfolio_return_withdiv(purchase_price, latest_price, div_yield)
         
         stock = Stock.query.filter_by(ticker=ticker, user_id=current_user.id).first()
         if stock:
@@ -188,7 +195,8 @@ def dashboard():
     db.session.commit()
 
     portfolio_return = calculate_portfolio_return(stock_data) if stock_data else 0
-    return render_template('dashboard.html', stocks=stock_data, portfolio_return=portfolio_return)
+    portfolio_return_withdiv = calculate_portfolio_return_withdiv(stock_data) if stock_data else 0
+    return render_template('dashboard.html', stocks=stock_data, portfolio_return=portfolio_return, portfolio_return_withdiv=portfolio_return_withdiv)
 
 @app.route('/delete', methods=['POST'])
 def delete():

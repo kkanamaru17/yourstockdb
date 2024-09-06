@@ -14,7 +14,7 @@
 
     <div class="container">
         <h1>Welcome, {{ current_user.username }}!</h1>
-        <h1>Stock Data App</h1>
+        <h1>Stock DB</h1>
         <a href="{{ url_for('logout') }}">Logout</a><br><br>
         <form action="{{ url_for('dashboard') }}" method="post">
             <label for="ticker">Stock Ticker:</label>
@@ -63,7 +63,10 @@
             </tbody>
         </table>
         <h2>Portfolio Return: {{ portfolio_return|round(2) }}%</h2>
+        <h3>with dividend: {{ portfolio_return_withdiv|round(2) }}%</h3>
     </div>
+    <img src="static/images/loopy.png" alt="Dog" class="dog-image">
+
 </body>
 
 </html>

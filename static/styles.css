@@ -18,7 +18,7 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-h1, h2, a {
+h1, h2, h3, a {
     text-align: center;
     color: #333;
 }
@@ -84,4 +84,13 @@ tbody tr:nth-child(odd) {
 
 tbody tr:hover {
     background-color: #f1f1f1;
+}
+
+.dog-image {
+    position: fixed;
+    bottom: 0px;
+    right: 10px;
+    width: 100px; /* Adjust the size as needed */
+    height: auto;
+    z-index: 100; /* Ensure it appears on top of other elements */
 }
