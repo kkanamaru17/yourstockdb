@@ -122,13 +122,6 @@ def login():
                 return redirect(url_for('dashboard'))
     return render_template('login.html', form=form)
 
-
-# @app.route('/dashboard', methods=['GET', 'POST'])
-# @login_required
-# def dashboard():
-#     return render_template('dashboard.html')
-
-
 @app.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
@@ -160,15 +153,30 @@ def dashboard():
         return_performance = calculate_returns(purchase_price, latest_price)
         forward_pe = fetch_forwardPE(ticker)
         div_yield = fetch_divyiled(ticker)
-        
+
         stock = Stock.query.filter_by(ticker=ticker, user_id=current_user.id).first()
         if stock:
-            stock.purchase_price = purchase_price
-            stock.shares = shares
+            # stock.purchase_price = purchase_price
+            # stock.shares = shares
+            # stock.latest_price = latest_price
+            # stock.return_performance = return_performance
+            # stock.forward_pe = forward_pe
+            # stock.div_yield = div_yield
+            
+            # Aggregate shares and recalculate the average purchase price
+            total_investment = (stock.purchase_price * stock.shares) + (purchase_price * shares)
+            total_shares = stock.shares + shares
+            new_average_purchase_price = total_investment / total_shares
+
+            # Update stock details
+            stock.purchase_price = new_average_purchase_price
+            stock.shares = total_shares
             stock.latest_price = latest_price
-            stock.return_performance = return_performance
+            stock.return_performance = calculate_returns(stock.purchase_price, latest_price)
             stock.forward_pe = forward_pe
             stock.div_yield = div_yield
+
+
         else:
             new_stock = Stock(
                 ticker=ticker,
