@@ -26,10 +26,18 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # Helper functions
+# def fetch_latest_price(ticker):
+#     stock = yf.Ticker(ticker)
+#     latest_price = stock.history(period="1d")['Close'].iloc[-1]
+#     return latest_price
+
 def fetch_latest_price(ticker):
-    stock = yf.Ticker(ticker)
-    latest_price = stock.history(period="1d")['Close'].iloc[-1]
-    return latest_price
+    try:
+        stock = yf.Ticker(ticker)
+        latest_price = stock.history(period="1d")['Close'].iloc[-1]
+        return latest_price
+    except Exception:
+        return 0
 
 def fetch_forwardPE(ticker):
     stock = yf.Ticker(ticker)
@@ -66,7 +74,7 @@ def calculate_portfolio_return_withdiv(stocks_data):
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), nullable=False, unique=True)
-    password = db.Column(db.String(80), nullable=False)
+    password = db.Column(db.String(128), nullable=False)
 
 class Stock(db.Model):
     id = db.Column(db.Integer, primary_key=True)
