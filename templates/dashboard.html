@@ -37,6 +37,7 @@
                     <th>Purchase Price</th>
                     <th>Shares</th>
                     <th>Latest Price</th>
+                    <th>Daily Return (%)</th>
                     <th>Return (%)</th>
                     <th>Forward PE</th>
                     <th>Dividend Yield</th>
@@ -50,6 +51,7 @@
                     <td>${{ stock.purchase_price }}</td>
                     <td>{{ stock.shares }}</td>
                     <td>${{ stock.latest_price }}</td>
+                    <td>{{ stock.daily_return|round(2) }}%</td>                    
                     <td>{{ stock.return_performance|round(2) }}%</td>
                     <td>{{ stock.forward_pe|default(0)|round(2) }}</td>
                     <td>{{ stock.div_yield|default(0)|round(2) }}%</td>

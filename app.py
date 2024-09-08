@@ -5,6 +5,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Length, ValidationError
 from flask_bcrypt import Bcrypt
+from flask_migrate import Migrate
 from config import Config
 import yfinance as yf
 
@@ -12,6 +13,8 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
+migrate = Migrate(app, db)
+
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 # app.config['SECRET_KEY'] = 'thisisasecretkey'
 
@@ -38,6 +41,19 @@ def fetch_latest_price(ticker):
         return float(latest_price) if latest_price is not None else 0.0  # Check for None
     except Exception:
         return 0
+    
+def fetch_daily_return(ticker):
+    try:
+        stock = yf.Ticker(ticker)
+        history = stock.history(period="5d")  # Fetch the last 5 days' price data
+        if len(history) < 2:
+            return 0.0  # Not enough data to calculate daily return
+        today_close = history['Close'].iloc[-1]
+        yesterday_close = history['Close'].iloc[-2]
+        daily_return = ((today_close - yesterday_close) / yesterday_close) * 100
+        return float(daily_return)  # Round to 2 decimal places
+    except Exception as e:
+        return 0.0
 
 def fetch_forwardPE(ticker):
     stock = yf.Ticker(ticker)
@@ -64,7 +80,7 @@ def calculate_portfolio_return(stocks_data):
     total_investment = sum(stock.purchase_price * stock.shares for stock in stocks_data)
     total_current_value = sum(stock.latest_price * stock.shares for stock in stocks_data)
     portfolio_return = ((total_current_value - total_investment) / total_investment) * 100
-    return float(portfolio_return)
+    return float(portfolio_return) 
 
 def calculate_portfolio_return_withdiv(stocks_data):
     total_investment = sum(stock.purchase_price * stock.shares for stock in stocks_data)
@@ -84,6 +100,7 @@ class Stock(db.Model):
     purchase_price = db.Column(db.Float, nullable=False)
     shares = db.Column(db.Integer, nullable=False)
     latest_price = db.Column(db.Float, nullable=True)
+    daily_return = db.Column(db.Float, nullable=True, default=0.0)
     return_performance = db.Column(db.Float, nullable=True, default=0.0)
     forward_pe = db.Column(db.Float, nullable=True, default=0.0)
     div_yield = db.Column(db.Float, nullable=True, default=0.0)
@@ -159,25 +176,14 @@ def dashboard():
         purchase_price = float(request.form['purchase_price'])
         shares = int(request.form['num_shares'])
         
-        # latest_price = float(fetch_latest_price(ticker))
-        # return_performance = float(calculate_returns(purchase_price, latest_price))
-        # forward_pe = float(fetch_forwardPE(ticker)) if fetch_forwardPE(ticker) else 0.0
-        # div_yield = float(fetch_divyiled(ticker)) if fetch_divyiled(ticker) != "-" else 0.0
-
         latest_price = fetch_latest_price(ticker)
         return_performance = calculate_returns(purchase_price, latest_price)
         forward_pe = fetch_forwardPE(ticker)
         div_yield = fetch_divyiled(ticker)
+        daily_return = fetch_daily_return(ticker)
 
         stock = Stock.query.filter_by(ticker=ticker, user_id=current_user.id).first()
         if stock:
-            # stock.purchase_price = purchase_price
-            # stock.shares = shares
-            # stock.latest_price = latest_price
-            # stock.return_performance = return_performance
-            # stock.forward_pe = forward_pe
-            # stock.div_yield = div_yield
-            
             # Aggregate shares and recalculate the average purchase price
             total_investment = (stock.purchase_price * stock.shares) + (purchase_price * shares)
             total_shares = stock.shares + shares
@@ -187,10 +193,10 @@ def dashboard():
             stock.purchase_price = new_average_purchase_price
             stock.shares = total_shares
             stock.latest_price = latest_price
+            stock.daily_return = daily_return
             stock.return_performance = calculate_returns(stock.purchase_price, latest_price)
             stock.forward_pe = forward_pe
             stock.div_yield = div_yield
-
 
         else:
             new_stock = Stock(
@@ -198,12 +204,13 @@ def dashboard():
                 purchase_price=purchase_price,
                 shares=shares,
                 latest_price=latest_price,
+                daily_return=daily_return,
                 return_performance=return_performance,
                 forward_pe=forward_pe,
                 div_yield=div_yield,
                 user_id=current_user.id
             )
-            db.session.add(new_stock)
+        db.session.add(new_stock)
         db.session.commit()
         return redirect(url_for('dashboard'))
     
