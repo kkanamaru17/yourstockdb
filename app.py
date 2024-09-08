@@ -35,7 +35,7 @@ def fetch_latest_price(ticker):
     try:
         stock = yf.Ticker(ticker)
         latest_price = stock.history(period="1d")['Close'].iloc[-1]
-        return float(latest_price)
+        return float(latest_price) if latest_price is not None else 0.0  # Check for None
     except Exception:
         return 0
 
@@ -43,7 +43,7 @@ def fetch_forwardPE(ticker):
     stock = yf.Ticker(ticker)
     quote_table = stock.info
     forward_pe = quote_table.get('forwardPE')
-    return float(forward_pe)
+    return float(forward_pe) if forward_pe is not None else 0.0  # Check for None
 
 def fetch_divyiled(ticker):
     stock = yf.Ticker(ticker)
@@ -56,7 +56,9 @@ def fetch_divyiled(ticker):
     return float(div_yield * 100)
 
 def calculate_returns(purchase_price, latest_price):
-    return float(((latest_price - purchase_price) / purchase_price) * 100)
+    if purchase_price == 0:  # Prevent division by zero
+        return 0.0
+    return float(((latest_price - purchase_price) / purchase_price) * 100)  # Always return a float
 
 def calculate_portfolio_return(stocks_data):
     total_investment = sum(stock.purchase_price * stock.shares for stock in stocks_data)
