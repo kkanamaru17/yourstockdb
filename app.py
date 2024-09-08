@@ -35,7 +35,7 @@ def fetch_latest_price(ticker):
     try:
         stock = yf.Ticker(ticker)
         latest_price = stock.history(period="1d")['Close'].iloc[-1]
-        return latest_price
+        return float(latest_price)
     except Exception:
         return 0
 
@@ -43,7 +43,7 @@ def fetch_forwardPE(ticker):
     stock = yf.Ticker(ticker)
     quote_table = stock.info
     forward_pe = quote_table.get('forwardPE')
-    return forward_pe
+    return float(forward_pe)
 
 def fetch_divyiled(ticker):
     stock = yf.Ticker(ticker)
@@ -53,23 +53,23 @@ def fetch_divyiled(ticker):
     if div_yield is None:
         return "-"
     # If div_yield is a valid number, multiply by 100 to get the percentage
-    return div_yield * 100
+    return float(div_yield * 100)
 
 def calculate_returns(purchase_price, latest_price):
-    return ((latest_price - purchase_price) / purchase_price) * 100
+    return float(((latest_price - purchase_price) / purchase_price) * 100)
 
 def calculate_portfolio_return(stocks_data):
     total_investment = sum(stock.purchase_price * stock.shares for stock in stocks_data)
     total_current_value = sum(stock.latest_price * stock.shares for stock in stocks_data)
     portfolio_return = ((total_current_value - total_investment) / total_investment) * 100
-    return portfolio_return
+    return float(portfolio_return)
 
 def calculate_portfolio_return_withdiv(stocks_data):
     total_investment = sum(stock.purchase_price * stock.shares for stock in stocks_data)
     total_current_value = sum(stock.latest_price * stock.shares for stock in stocks_data)
     total_div = sum(stock.latest_price * stock.div_yield for stock in stocks_data)
     portfolio_return_withdiv = ((total_current_value + total_div - total_investment) / total_investment) * 100
-    return portfolio_return_withdiv
+    return float(portfolio_return_withdiv)
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -142,7 +142,7 @@ def register():
     form = RegisterForm()
 
     if form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(form.password.data)
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         new_user = User(username=form.username.data, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
@@ -157,6 +157,11 @@ def dashboard():
         purchase_price = float(request.form['purchase_price'])
         shares = int(request.form['num_shares'])
         
+        # latest_price = float(fetch_latest_price(ticker))
+        # return_performance = float(calculate_returns(purchase_price, latest_price))
+        # forward_pe = float(fetch_forwardPE(ticker)) if fetch_forwardPE(ticker) else 0.0
+        # div_yield = float(fetch_divyiled(ticker)) if fetch_divyiled(ticker) != "-" else 0.0
+
         latest_price = fetch_latest_price(ticker)
         return_performance = calculate_returns(purchase_price, latest_price)
         forward_pe = fetch_forwardPE(ticker)
