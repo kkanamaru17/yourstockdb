@@ -8,16 +8,20 @@ from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from config import Config
 import yfinance as yf
+import matplotlib.pyplot as plt
+plt.switch_backend('Agg')
+import matplotlib
+matplotlib.use('Agg')
+import io
+import base64
+import pandas as pd
+from yahoo_fin import stock_info as si
 
 app = Flask(__name__)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 migrate = Migrate(app, db)
-
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-# app.config['SECRET_KEY'] = 'thisisasecretkey'
-
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -30,17 +34,26 @@ def load_user(user_id):
 
 # Helper functions
 # def fetch_latest_price(ticker):
-#     stock = yf.Ticker(ticker)
-#     latest_price = stock.history(period="1d")['Close'].iloc[-1]
-#     return latest_price
-
+#     try:
+#         stock = yf.Ticker(ticker)
+#         latest_price = stock.history(period="1d")['Close'].iloc[-1]
+#         return float(latest_price) if latest_price is not None else 0.0  # Check for None
+#     except Exception:
+#         return 0
+    
 def fetch_latest_price(ticker):
     try:
         stock = yf.Ticker(ticker)
-        latest_price = stock.history(period="1d")['Close'].iloc[-1]
-        return float(latest_price) if latest_price is not None else 0.0  # Check for None
-    except Exception:
-        return 0
+        history = stock.history(period="1d")
+        if not history.empty:
+            latest_price = history['Close'].iloc[-1]
+            return float(latest_price) if latest_price is not None else 0.0
+        else:
+            print(f"No data returned for {ticker}")
+            return 0.0
+    except Exception as e:
+        print(f"Error fetching latest price for {ticker}: {e}")
+        return 0.0
     
 def fetch_daily_return(ticker):
     try:
@@ -67,7 +80,7 @@ def fetch_divyiled(ticker):
     div_yield = quote_table.get('dividendYield')
     # Check if div_yield is None, and return "-" if it is
     if div_yield is None:
-        return "-"
+        return 0.0
     # If div_yield is a valid number, multiply by 100 to get the percentage
     return float(div_yield * 100)
 
@@ -219,6 +232,7 @@ def dashboard():
     # Update latest prices and recalculate return for each stock
     for stock in stock_data:
         stock.latest_price = fetch_latest_price(stock.ticker)
+        stock.daily_return = fetch_daily_return(stock.ticker)
         stock.return_performance = calculate_returns(stock.purchase_price, stock.latest_price)
     
     db.session.commit()
@@ -236,5 +250,93 @@ def delete():
         db.session.commit()
     return redirect(url_for('dashboard'))
 
+@app.route('/stockan', methods=['GET', 'POST'])
+def stockan():
+    if request.method == 'POST':
+        ticker = request.form['ticker']
+        stock_info = get_stock_info(ticker)
+        return render_template('stockan.html', stock_info=stock_info)
+    return render_template('stockan.html')
+
+def get_valuation_history(ticker):
+    try:
+        # Fetch valuation data
+        valuation_data = si.get_stats_valuation(ticker)
+        
+        # Set the first column as index
+        valuation_data = valuation_data.set_index('Unnamed: 0')
+        
+        # Convert the dataframe to a dictionary
+        data_dict = valuation_data.to_dict()
+        
+        # Prepare the output dictionary
+        output = {}
+        for col, values in data_dict.items():
+            output[col] = {k: v for k, v in values.items() if pd.notnull(v)}
+        
+        return output
+    except Exception as e:
+        print(f"Error fetching valuation history for {ticker}: {str(e)}")
+        return None
+
+def get_stock_info(ticker):
+    try:
+        stock = yf.Ticker(ticker)
+        info = stock.info
+        
+        # Fetch required information
+        company_name = info.get('longName', 'N/A')
+        market_cap = info.get('marketCap', 'N/A')
+        if market_cap != 'N/A':
+            market_cap = f"{market_cap:,}"
+        per = info.get('trailingPE', 'N/A')
+        if per != 'N/A':
+            per = f"{per:.2f}"
+        pbr = info.get('priceToBook', 'N/A')
+        if pbr != 'N/A':
+            pbr = f"{pbr:.2f}"
+        dividend_yield = info.get('dividendYield', 'N/A')
+        if dividend_yield != 'N/A':
+            dividend_yield = f"{dividend_yield*100:.2f}"
+        
+        # Generate stock chart
+        hist = stock.history(period="1mo")
+        fig, ax = plt.subplots(figsize=(8,4))
+        ax.plot(hist.index, hist['Close'])
+        ax.set_title(f"{company_name} Stock Price - Last Month")
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Price")
+        
+        # Save plot to a base64 string
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format='png')
+        buffer.seek(0)
+        chart_image = base64.b64encode(buffer.getvalue()).decode()
+        
+        # Fetch valuation history
+        valuation_history = get_valuation_history(ticker)
+        
+        # Clean up
+        plt.close(fig)
+        del fig, ax
+
+        return {
+            'company_name': company_name,
+            'market_cap': market_cap,
+            'per': per,
+            'pbr': pbr,
+            'dividend_yield': dividend_yield,
+            'chart_image': f"data:image/png;base64,{chart_image}",
+            'valuation_history': valuation_history
+        }
+    except Exception as e:
+        print(f"Error fetching stock info for {ticker}: {str(e)}")
+        return None
+
+
 if __name__ == "__main__":
     app.run(debug=True)
+
+# Cleanup matplotlib
+plt.close('all')
+matplotlib.pyplot.close('all')

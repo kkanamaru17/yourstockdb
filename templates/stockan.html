@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockAN</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Stock Analysis</h1>
+        <a href="{{ url_for('dashboard') }}">Back to Stock DB</a><br><br>
+        <form id="stock-form" action="{{ url_for('stockan') }}" method="POST">
+            <label for="ticker">Stock Ticker:</label>
+            <input type="text" id="ticker" name="ticker" required>
+            <button type="submit">Get Stock Info</button>
+        </form>
+        
+        {% if stock_info %}
+        <div class="content-wrapper">  <!-- Add this wrapper if not already present -->
+            <div id="stock-info">
+                <h2>{{ stock_info.company_name }}</h2>
+                <ul>
+                    <li>Market Cap: ${{ stock_info.market_cap }}</li>
+                    <li>P/E Ratio: {{ stock_info.per }}</li>
+                    <li>P/B Ratio: {{ stock_info.pbr }}</li>
+                    <li>Dividend Yield: {{ stock_info.dividend_yield }}%</li>
+                </ul>
+                <h3>Recent Stock Chart</h3>
+                <div class="chart-container">
+                    <img src="{{ stock_info.chart_image }}" alt="Stock Chart" id="stock-chart">
+                </div>
+                
+                {% if stock_info.valuation_history %}
+                    <h3>Valuation History</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    {% for date in stock_info.valuation_history.keys() %}
+                                        <th>{{ date }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% set metrics = stock_info.valuation_history[stock_info.valuation_history.keys()|list|first].keys() %}
+                                {% for metric in metrics %}
+                                <tr>
+                                    <td>{{ metric }}</td>
+                                    {% for date in stock_info.valuation_history.keys() %}
+                                        <td>{{ stock_info.valuation_history[date].get(metric, 'N/A') }}</td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>Valuation history is not available for this stock.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // You can add any client-side JavaScript here if needed
+    </script>
+</body>

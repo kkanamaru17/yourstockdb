@@ -8,7 +8,6 @@
     <title>Dashboard</title>
     <link rel="stylesheet" href="static/styles.css">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
-
 </head>
 
 <body>
@@ -16,7 +15,8 @@
     <div class="container">
         <h1>Welcome, {{ current_user.username }}!</h1>
         <h1>Stock DB</h1>
-        <a href="{{ url_for('logout') }}">Logout</a><br><br>
+        <a href="{{ url_for('logout') }}">Logout</a><br>
+        <a href="{{ url_for('stockan') }}">Stock Analysis</a><span>: to see info on a stock click here</span><br><br>
         <form action="{{ url_for('dashboard') }}" method="post">
             <label for="ticker">Stock Ticker:</label>
             <input type="text" id="ticker" name="ticker" required>
