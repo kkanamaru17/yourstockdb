@@ -119,6 +119,11 @@ class Stock(db.Model):
     div_yield = db.Column(db.Float, nullable=True, default=0.0)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
+class StockMemo(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ticker = db.Column(db.String(10), unique=True, nullable=False)
+    memo = db.Column(db.Text)
+
 class RegisterForm(FlaskForm):
     username = StringField(validators=[
                            InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Username"})
@@ -250,13 +255,52 @@ def delete():
         db.session.commit()
     return redirect(url_for('dashboard'))
 
+# @app.route('/stockan', methods=['GET', 'POST'])
+# def stockan():
+#     if request.method == 'POST':
+#         ticker = request.form['ticker']
+#         stock_info = get_stock_info(ticker)
+#         return render_template('stockan.html', stock_info=stock_info)
+#     return render_template('stockan.html')
+
+# Update the stockan route
 @app.route('/stockan', methods=['GET', 'POST'])
 def stockan():
-    if request.method == 'POST':
-        ticker = request.form['ticker']
+    ticker = request.args.get('ticker') or request.form.get('ticker')
+    
+    if ticker:
         stock_info = get_stock_info(ticker)
-        return render_template('stockan.html', stock_info=stock_info)
+        
+        # Load the memo if it exists
+        memo = StockMemo.query.filter_by(ticker=ticker).first()
+        if memo:
+            stock_info['memo'] = memo.memo
+        else:
+            stock_info['memo'] = ""
+        
+        stock_info['ticker'] = ticker  # Ensure the ticker is included in stock_info
+        
+        return render_template('stockan.html', stock_info=stock_info, ticker=ticker)
+    
     return render_template('stockan.html')
+
+# Update the route for saving the memo
+@app.route('/save_memo', methods=['POST'])
+def save_memo():
+    ticker = request.form['ticker']
+    memo_text = request.form['memo']
+    
+    memo = StockMemo.query.filter_by(ticker=ticker).first()
+    if memo:
+        memo.memo = memo_text
+    else:
+        new_memo = StockMemo(ticker=ticker, memo=memo_text)
+        db.session.add(new_memo)
+    
+    db.session.commit()
+    
+    # Redirect back to the stockan page with the ticker as a parameter
+    return redirect(url_for('stockan', ticker=ticker))
 
 def get_valuation_history(ticker):
     try:

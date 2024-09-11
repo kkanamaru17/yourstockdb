@@ -13,7 +13,7 @@
         <a href="{{ url_for('dashboard') }}">Back to Stock DB</a><br><br>
         <form id="stock-form" action="{{ url_for('stockan') }}" method="POST">
             <label for="ticker">Stock Ticker:</label>
-            <input type="text" id="ticker" name="ticker" required>
+            <input type="text" id="ticker" name="ticker" value="{{ ticker or '' }}" required>
             <button type="submit">Get Stock Info</button>
         </form>
         
@@ -60,6 +60,14 @@
                 {% else %}
                     <p>Valuation history is not available for this stock.</p>
                 {% endif %}
+                
+                <h3>Memo</h3>
+                <form method="POST" action="{{ url_for('save_memo') }}">
+                    <input type="hidden" name="ticker" value="{{ stock_info.ticker }}">
+                    <textarea name="memo" rows="4" cols="50">{{ stock_info.memo }}</textarea>
+                    <br>
+                    <button type="submit">Save Memo</button>
+                </form>
             </div>
         </div>
         {% endif %}

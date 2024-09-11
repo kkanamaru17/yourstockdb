@@ -1,4 +1,4 @@
-#!c:\Users\kkana\OneDrive\Desktop\login_stock_v2\.venv\Scripts\python.exe
+#!c:\Users\kkana\OneDrive\Desktop\yourstockdb\.venv\Scripts\python.exe
 
 import datetime
 import os

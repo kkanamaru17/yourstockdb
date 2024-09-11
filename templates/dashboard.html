@@ -47,7 +47,9 @@
             <tbody>
                 {% for stock in stocks %}
                 <tr>
-                    <td>{{ stock.ticker }}</td>
+                    <td>
+                        <a href="{{ url_for('stockan', ticker=stock.ticker) }}">{{ stock.ticker }}</a>
+                    </td>
                     <td>${{ stock.purchase_price }}</td>
                     <td>{{ stock.shares }}</td>
                     <td>${{ stock.latest_price }}</td>
