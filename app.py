@@ -40,14 +40,15 @@ def load_user(user_id):
 #         return float(latest_price) if latest_price is not None else 0.0  # Check for None
 #     except Exception:
 #         return 0
-    
+
+
 def fetch_latest_price(ticker):
     try:
         stock = yf.Ticker(ticker)
         history = stock.history(period="1d")
         if not history.empty:
             latest_price = history['Close'].iloc[-1]
-            return float(latest_price) if latest_price is not None else 0.0
+            return round(float(latest_price), 2) if latest_price is not None else 0.0
         else:
             print(f"No data returned for {ticker}")
             return 0.0
@@ -342,7 +343,10 @@ def get_stock_info(ticker):
         dividend_yield = info.get('dividendYield', 'N/A')
         if dividend_yield != 'N/A':
             dividend_yield = f"{dividend_yield*100:.2f}"
-        
+        targetMeanPrice = info.get('targetMeanPrice', 'N/A')
+        targetMedianPrice = info.get('targetMedianPrice', 'N/A')       
+        analystRating = info.get('recommendationKey', 'N/A')
+        numberofAnalysts = info.get('numberOfAnalystOpinions', 'N/A')
         # Generate stock chart
         hist = stock.history(period="1mo")
         fig, ax = plt.subplots(figsize=(8,4))
@@ -370,6 +374,10 @@ def get_stock_info(ticker):
             'per': per,
             'pbr': pbr,
             'dividend_yield': dividend_yield,
+            'targetMeanPrice': targetMeanPrice,
+            'targetMedianPrice': targetMedianPrice,
+            'analystRating': analystRating,
+            'numberofAnalysts': numberofAnalysts,
             'chart_image': f"data:image/png;base64,{chart_image}",
             'valuation_history': valuation_history
         }

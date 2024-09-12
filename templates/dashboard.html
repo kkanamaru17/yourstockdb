@@ -6,6 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="static/styles.css">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
 </head>
@@ -37,8 +38,8 @@
                     <th>Purchase Price</th>
                     <th>Shares</th>
                     <th>Latest Price</th>
-                    <th>Daily Return (%)</th>
-                    <th>Return (%)</th>
+                    <th>Daily Return</th>
+                    <th>Return</th>
                     <th>Forward PE</th>
                     <th>Dividend Yield</th>
                     <th>Actions</th>
@@ -70,7 +71,7 @@
         <h2>Portfolio Return: {{ portfolio_return|round(2) }}%</h2>
         <h3>with dividend: {{ portfolio_return_withdiv|round(2) }}%</h3>
     </div>
-    <img src="static/images/loopy.png" alt="Dog" class="dog-image">
+    <img src="static/images/loopy_cool.png" alt="Dog" class="dog-image">
 
 </body>
 

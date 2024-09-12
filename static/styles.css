@@ -1,13 +1,12 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Inter', sans-serif;
     margin: 0;
     padding: 20px;
-    /* display: flex; */
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    background-color: #f0f2f5;
     min-height: 100vh;
+    background-color: #ffffff;
+    color: #000000;
 }
 
 .container {
@@ -15,14 +14,32 @@ body {
     max-width: 800px;
     padding: 20px;
     background: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin: 0 auto; /* Center the container horizontally */
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0 auto;
 }
 
-h1, h2, h3, a {
-    text-align: center;
-    color: #333;
+h1, h2, h3 {
+    text-align: left;
+    color: #000000;
+    font-weight: 700;
+}
+
+h1 {
+    font-size: 2.5rem;
+}
+
+h2 {
+    font-size: 2rem;
+}
+
+h3 {
+    font-size: 1.5rem;
+}
+
+a {
+    color: #000000;
+    text-decoration: underline;
 }
 
 form {
@@ -32,7 +49,7 @@ form {
 label {
     display: block;
     margin-bottom: 5px;
-    font-weight: bold;
+    font-weight: 600;
 }
 
 input[type="text"],
@@ -40,25 +57,25 @@ input[type="number"] {
     width: 100%;
     padding: 10px;
     margin-bottom: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    border: 1px solid #000000;
+    border-radius: 0;
     box-sizing: border-box;
 }
 
 button {
-    width: 100%;
-    padding: 10px;
-    background-color: #4caf50;
+    width: auto;
+    padding: 10px 20px;
+    background-color: #000000;
     border: none;
-    color: #fff;
+    color: #ffffff;
     font-size: 16px;
-    border-radius: 4px;
+    border-radius: 0;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
 
 button:hover {
-    background-color: #66786e;
+    background-color: #333333;
 }
 
 table {
@@ -67,7 +84,7 @@ table {
 }
 
 table, th, td {
-    border: 1px solid #ddd;
+    border: 1px solid #000000;
 }
 
 th, td {
@@ -76,7 +93,7 @@ th, td {
 }
 
 thead {
-    background-color: #4caf50;
+    background-color: #000000;
     color: #ffffff;
 }
 
@@ -101,4 +118,35 @@ tbody tr:hover {
 html, body {
     height: 100%;
     overflow-y: auto;
+}
+
+.stock-info-columns {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.left-column, .right-column {
+    width: 48%; /* Adjust as needed */
+}
+
+.stock-info-columns ul {
+    padding-left: 20px; /* This gives space for the bullets */
+    margin: 0;
+}
+
+.stock-info-columns li {
+    margin-bottom: 10px;
+}
+
+textarea {
+    width: 100%;
+    max-width: 800px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #333333;
+    border-radius: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
 }

@@ -18,58 +18,66 @@
         </form>
         
         {% if stock_info %}
-        <div class="content-wrapper">  <!-- Add this wrapper if not already present -->
-            <div id="stock-info">
-                <h2>{{ stock_info.company_name }}</h2>
+        <h2>{{ stock_info.company_name }}</h2>
+        <div class="stock-info-columns">
+            <div class="left-column">
                 <ul>
                     <li>Market Cap: ${{ stock_info.market_cap }}</li>
                     <li>P/E Ratio: {{ stock_info.per }}</li>
                     <li>P/B Ratio: {{ stock_info.pbr }}</li>
                     <li>Dividend Yield: {{ stock_info.dividend_yield }}%</li>
                 </ul>
-                <h3>Recent Stock Chart</h3>
-                <div class="chart-container">
-                    <img src="{{ stock_info.chart_image }}" alt="Stock Chart" id="stock-chart">
-                </div>
-                
-                {% if stock_info.valuation_history %}
-                    <h3>Valuation History</h3>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Metric</th>
-                                    {% for date in stock_info.valuation_history.keys() %}
-                                        <th>{{ date }}</th>
-                                    {% endfor %}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% set metrics = stock_info.valuation_history[stock_info.valuation_history.keys()|list|first].keys() %}
-                                {% for metric in metrics %}
-                                <tr>
-                                    <td>{{ metric }}</td>
-                                    {% for date in stock_info.valuation_history.keys() %}
-                                        <td>{{ stock_info.valuation_history[date].get(metric, 'N/A') }}</td>
-                                    {% endfor %}
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <p>Valuation history is not available for this stock.</p>
-                {% endif %}
-                
-                <h3>Memo</h3>
-                <form method="POST" action="{{ url_for('save_memo') }}">
-                    <input type="hidden" name="ticker" value="{{ stock_info.ticker }}">
-                    <textarea name="memo" rows="4" cols="50">{{ stock_info.memo }}</textarea>
-                    <br>
-                    <button type="submit">Save Memo</button>
-                </form>
+            </div>
+            <div class="right-column">
+                <ul>
+                    <li>Target Mean Price: {{ stock_info.targetMeanPrice }}</li>
+                    <li>Target Median Price: {{ stock_info.targetMedianPrice }}</li>
+                    <li>Analyst Rating: {{ stock_info.analystRating }}</li>
+                    <li>Number of Analysts: {{ stock_info.numberofAnalysts }}</li>
+                </ul>
             </div>
         </div>
+        <h3>Recent Stock Chart</h3>
+        <div class="chart-container">
+            <img src="{{ stock_info.chart_image }}" alt="Stock Chart" id="stock-chart">
+        </div>
+        
+        {% if stock_info.valuation_history %}
+            <h3>Valuation History</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            {% for date in stock_info.valuation_history.keys() %}
+                                <th>{{ date }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set metrics = stock_info.valuation_history[stock_info.valuation_history.keys()|list|first].keys() %}
+                        {% for metric in metrics %}
+                        <tr>
+                            <td>{{ metric }}</td>
+                            {% for date in stock_info.valuation_history.keys() %}
+                                <td>{{ stock_info.valuation_history[date].get(metric, 'N/A') }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>Valuation history is not available for this stock.</p>
+        {% endif %}
+        
+        <h3>Memo</h3>
+        <form method="POST" action="{{ url_for('save_memo') }}">
+            <input type="hidden" name="ticker" value="{{ stock_info.ticker }}">
+            <textarea name="memo" rows="4" cols="50">{{ stock_info.memo }}</textarea>
+            <br>
+            <button type="submit">Save Memo</button>
+        </form>
         {% endif %}
     </div>
 
