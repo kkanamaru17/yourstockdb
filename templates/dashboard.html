@@ -70,6 +70,14 @@
         </table>
         <h2>Portfolio Return: {{ portfolio_return|round(2) }}%</h2>
         <h3>with dividend: {{ portfolio_return_withdiv|round(2) }}%</h3>
+        <h3>Portfolio Summary:</h3>
+        <ul>
+            <li>Total Value: {{ '{:,}'.format(total_value|round(0)|int) }}</li>
+            <li>Return: {{ '{:,}'.format(return_value|round(0)|int) }}</li>
+            <li>Dividend: {{ '{:,}'.format(dividend_value|round(0)|int) }}</li>
+            <li>Number of Stocks: {{ num_stocks }}</li>
+            <li>Win Rate: {{ win_rate|round(2) }}%</li>
+        </ul>
     </div>
     <img src="static/images/loopy_cool.png" alt="Dog" class="dog-image">
 

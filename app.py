@@ -213,11 +213,11 @@ def dashboard():
             stock.shares = total_shares
             stock.latest_price = latest_price
             stock.daily_return = daily_return
-            stock.return_performance = calculate_returns(stock.purchase_price, latest_price)
+            stock.return_performance = calculate_returns(new_average_purchase_price, latest_price)
             stock.forward_pe = forward_pe
             stock.div_yield = div_yield
-
         else:
+            # Create a new stock entry
             new_stock = Stock(
                 ticker=ticker,
                 purchase_price=purchase_price,
@@ -229,7 +229,8 @@ def dashboard():
                 div_yield=div_yield,
                 user_id=current_user.id
             )
-        db.session.add(new_stock)
+            db.session.add(new_stock)
+
         db.session.commit()
         return redirect(url_for('dashboard'))
     
@@ -245,7 +246,25 @@ def dashboard():
 
     portfolio_return = calculate_portfolio_return(stock_data) if stock_data else 0
     portfolio_return_withdiv = calculate_portfolio_return_withdiv(stock_data) if stock_data else 0
-    return render_template('dashboard.html', stocks=stock_data, portfolio_return=portfolio_return, portfolio_return_withdiv=portfolio_return_withdiv)
+
+    # Calculate new metrics
+    total_value = sum(stock.latest_price * stock.shares for stock in stock_data)
+    total_cost = sum(stock.purchase_price * stock.shares for stock in stock_data)
+    return_value = total_value - total_cost
+    dividend_value = sum((stock.div_yield / 100) * stock.latest_price * stock.shares for stock in stock_data)
+    num_stocks = len(stock_data)
+    winning_stocks = sum(1 for stock in stock_data if stock.return_performance > 0)
+    win_rate = (winning_stocks / num_stocks) * 100 if num_stocks > 0 else 0
+
+    return render_template('dashboard.html', 
+                           stocks=stock_data, 
+                           portfolio_return=portfolio_return, 
+                           portfolio_return_withdiv=portfolio_return_withdiv,
+                           total_value=total_value,
+                           return_value=return_value,
+                           dividend_value=dividend_value,
+                           num_stocks=num_stocks,
+                           win_rate=win_rate)
 
 @app.route('/delete', methods=['POST'])
 def delete():
