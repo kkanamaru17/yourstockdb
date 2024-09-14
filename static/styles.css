@@ -81,15 +81,13 @@ button:hover {
 table {
     width: 100%;
     border-collapse: collapse;
-}
-
-table, th, td {
-    border: 1px solid #000000;
+    min-width: 600px; /* Adjust this value based on your content */
 }
 
 th, td {
-    padding: 12px;
+    padding: 8px;
     text-align: left;
+    white-space: nowrap;
 }
 
 thead {
@@ -149,4 +147,77 @@ textarea {
     box-sizing: border-box;
     font-family: 'Inter', sans-serif;
     font-size: 16px;
+}
+
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.stock-data {
+    width: 100%;
+}
+
+.stock-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.stock-table th, .stock-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.stock-cards {
+    display: none;
+}
+
+@media screen and (max-width: 768px) {
+    .stock-table {
+        display: none;
+    }
+
+    .stock-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .stock-card {
+        border: 1px solid #ddd;
+        padding: 15px;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+    }
+
+    .stock-card h3 {
+        margin-top: 0;
+    }
+
+    .stock-card p {
+        margin: 5px 0;
+    }
+
+    .stock-card .delete-btn {
+        margin-top: 10px;
+    }
+}
+
+.chart-container {
+    width: 100%;
+    max-width: 800px; /* or whatever maximum width you prefer */
+    margin: 0 auto;
+}
+
+#stock-chart {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+}
+
+@media screen and (max-width: 768px) {
+    .chart-container {
+        width: 95%;
+    }
 }

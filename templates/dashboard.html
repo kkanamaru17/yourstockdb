@@ -20,6 +20,7 @@
         <a href="{{ url_for('stockan') }}">Stock Analysis</a><span>: to see info on a stock click here</span><br><br>
         <form action="{{ url_for('dashboard') }}" method="post">
             <label for="ticker">Stock Ticker:</label>
+            
             <input type="text" id="ticker" name="ticker" required>
             
             <label for="purchase_price">Purchase Price:</label>
@@ -31,43 +32,53 @@
             <button type="submit">Add Data</button>
         </form>
         <h2>Stock Data</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Ticker</th>
-                    <th>Purchase Price</th>
-                    <th>Shares</th>
-                    <th>Latest Price</th>
-                    <th>Daily Return</th>
-                    <th>Return</th>
-                    <th>Forward PE</th>
-                    <th>Dividend Yield</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
+        <div class="stock-data">
+            <table class="stock-table">
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Purchase Price</th>
+                        <th>Shares</th>
+                        <th>Latest Price</th>
+                        <th>Return</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stock in stocks %}
+                    <tr>
+                        <td><a href="{{ url_for('stockan', ticker=stock.ticker) }}">{{ stock.ticker }}</a></td>
+                        <td>{{ stock.purchase_price|round(2) }}</td>
+                        <td>{{ stock.shares }}</td>
+                        <td>{{ stock.latest_price|round(2) }}</td>
+                        <td>{{ stock.return_performance|round(2) }}%</td>
+                        <td>
+                            <form action="/delete" method="post">
+                                <input type="hidden" name="ticker" value="{{ stock.ticker }}">
+                                <button type="submit" class="delete-btn">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="stock-cards">
                 {% for stock in stocks %}
-                <tr>
-                    <td>
-                        <a href="{{ url_for('stockan', ticker=stock.ticker) }}">{{ stock.ticker }}</a>
-                    </td>
-                    <td>${{ stock.purchase_price }}</td>
-                    <td>{{ stock.shares }}</td>
-                    <td>${{ stock.latest_price }}</td>
-                    <td>{{ stock.daily_return|round(2) }}%</td>                    
-                    <td>{{ stock.return_performance|round(2) }}%</td>
-                    <td>{{ stock.forward_pe|default(0)|round(2) }}</td>
-                    <td>{{ stock.div_yield|default(0)|round(2) }}%</td>
-                    <td>
-                        <form action="/delete" method="post" style="display:inline;">
-                            <input type="hidden" name="ticker" value="{{ stock.ticker }}">
-                            <button type="submit" class="delete-btn">Delete</button>
-                        </form>
-                    </td>
-                </tr>
+                <div class="stock-card">
+                    <h3><a href="{{ url_for('stockan', ticker=stock.ticker) }}">{{ stock.ticker }}</a></h3>
+                    <p>Purchase Price: ${{ stock.purchase_price }}</p>
+                    <p>Shares: {{ stock.shares }}</p>
+                    <p>Latest Price: ${{ stock.latest_price }}</p>
+                    <p>Return: {{ stock.return_performance|round(2) }}%</p>
+                    <form action="/delete" method="post">
+                        <input type="hidden" name="ticker" value="{{ stock.ticker }}">
+                        <button type="submit" class="delete-btn">Delete</button>
+                    </form>
+                </div>
                 {% endfor %}
-            </tbody>
-        </table>
+            </div>
+        </div>
         <h2>Portfolio Return: {{ portfolio_return|round(2) }}%</h2>
         <h3>with dividend: {{ portfolio_return_withdiv|round(2) }}%</h3>
         <h3>Portfolio Summary:</h3>
