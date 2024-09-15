@@ -37,10 +37,12 @@
                 <thead>
                     <tr>
                         <th>Ticker</th>
+                        <th class="company-name">Company Name</th>
                         <th>Purchase Price</th>
                         <th>Shares</th>
                         <th>Latest Price</th>
                         <th>Return</th>
+                        <th>Dividend Yield</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -48,10 +50,12 @@
                     {% for stock in stocks %}
                     <tr>
                         <td><a href="{{ url_for('stockan', ticker=stock.ticker) }}">{{ stock.ticker }}</a></td>
+                        <td class="company-name" title="{{ stock.company_name }}">{{ stock.company_name }}</td>
                         <td>{{ stock.purchase_price|round(2) }}</td>
                         <td>{{ stock.shares }}</td>
                         <td>{{ stock.latest_price|round(2) }}</td>
                         <td>{{ stock.return_performance|round(2) }}%</td>
+                        <td>{{ stock.div_yield|round(2) }}%</td>
                         <td>
                             <form action="/delete" method="post">
                                 <input type="hidden" name="ticker" value="{{ stock.ticker }}">
@@ -67,10 +71,12 @@
                 {% for stock in stocks %}
                 <div class="stock-card">
                     <h3><a href="{{ url_for('stockan', ticker=stock.ticker) }}">{{ stock.ticker }}</a></h3>
-                    <p>Purchase Price: ${{ stock.purchase_price }}</p>
+                    <p><strong>{{ stock.company_name }}</strong></p>
+                    <p>Purchase Price: {{ stock.purchase_price|round(2) }}</p>
                     <p>Shares: {{ stock.shares }}</p>
-                    <p>Latest Price: ${{ stock.latest_price }}</p>
+                    <p>Latest Price: {{ stock.latest_price|round(2) }}</p>
                     <p>Return: {{ stock.return_performance|round(2) }}%</p>
+                    <p>Dividend Yield: {{ stock.div_yield|round(2) }}%</p>
                     <form action="/delete" method="post">
                         <input type="hidden" name="ticker" value="{{ stock.ticker }}">
                         <button type="submit" class="delete-btn">Delete</button>
@@ -88,8 +94,23 @@
             <li>Dividend: {{ '{:,}'.format(dividend_value|round(0)|int) }}</li>
             <li>Number of Stocks: {{ num_stocks }}</li>
             <li>Win Rate: {{ win_rate|round(2) }}%</li>
+            <li>Portfolio Beta: {{ beta|round(2) }}</li>
+            <li>Portfolio Alpha: {{ alpha|round(2) }}%</li>
+            <li>Sharpe Ratio: {{ sharpe_ratio|round(2) }}</li>
         </ul>
-    </div>
+    </div> <!-- Close the main container div if you have one -->
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2024 Stock DB. All rights reserved.</p>
+            <nav class="footer-nav">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Contact Us</a>
+            </nav>
+        </div>
+    </footer>
+
     <img src="static/images/loopy_cool.png" alt="Dog" class="dog-image">
 
 </body>

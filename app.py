@@ -16,6 +16,11 @@ import io
 import base64
 import pandas as pd
 from yahoo_fin import stock_info as si
+import pandas_datareader as pdr
+import numpy as np
+from datetime import datetime, timedelta
+import pytz
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -103,6 +108,72 @@ def calculate_portfolio_return_withdiv(stocks_data):
     portfolio_return_withdiv = ((total_current_value + total_div - total_investment) / total_investment) * 100
     return float(portfolio_return_withdiv)
 
+def calculate_portfolio_metrics(stocks_data):
+    # Get the list of tickers
+    tickers = [stock.ticker for stock in stocks_data]
+    
+    # Calculate portfolio weights
+    total_value = sum(stock.latest_price * stock.shares for stock in stocks_data)
+    weights = np.array([stock.latest_price * stock.shares / total_value for stock in stocks_data])
+    
+    # Set timezone-aware end date in JST and make start date based on the last 3 years
+    jst = pytz.timezone('Asia/Tokyo')
+    end_date = datetime.now(jst).replace(tzinfo=None)  # Make end_date timezone-naive for consistency
+    start_date = end_date - timedelta(days=5*365)
+    
+    # Fetch data for stocks and Nikkei 225 (market benchmark)
+    tickers.append('^N225')  # Nikkei 225 ticker
+    data = yf.download(tickers, start=start_date, end=end_date)['Adj Close']
+    
+    # Make sure the stock data is timezone-naive
+    data.index = data.index.tz_localize(None)
+    
+    # Calculate returns
+    returns = data.pct_change().dropna()
+    
+    # Fetch Japanese 10-year government bond yield as risk-free rate
+    try:
+        jgb_data = pdr.get_data_fred('IRLTLT01JPM156N', start=start_date, end=end_date)
+        jgb_data.index = jgb_data.index.tz_localize(None)  # Make the FRED data timezone-naive
+        rf_rate = jgb_data['IRLTLT01JPM156N'] / 100 / 252  # Convert annual rate to daily rate
+    except Exception as e:
+        print(f"Error fetching Japanese risk-free rate: {e}")
+        rf_rate = pd.Series(0.001 / 252, index=returns.index)  # Use 0.1% annual rate as fallback
+    
+    # Align indexes and fill missing values
+    aligned_data = pd.concat([returns, rf_rate], axis=1).fillna(method='ffill')
+    stock_returns = aligned_data.iloc[:, :-1]
+    rf_rate = aligned_data.iloc[:, -1]
+    
+    # Calculate excess returns
+    excess_returns = stock_returns.sub(rf_rate, axis=0)
+    
+    # Separate stock returns and market returns
+    stock_excess_returns = excess_returns.iloc[:, :-1]
+    market_excess_returns = excess_returns.iloc[:, -1]
+    
+    # Calculate portfolio excess returns
+    portfolio_excess_returns = stock_excess_returns.dot(weights)
+    
+    # Calculate beta
+    covariance = portfolio_excess_returns.cov(market_excess_returns)
+    market_variance = market_excess_returns.var()
+    beta = covariance / market_variance
+    
+    # Calculate alpha (Jensen's Alpha)
+    expected_excess_return = beta * market_excess_returns.mean() * 252
+    alpha = portfolio_excess_returns.mean() * 252 - expected_excess_return
+    
+    # Calculate Sharpe ratio
+    sharpe_ratio = portfolio_excess_returns.mean() / portfolio_excess_returns.std() * np.sqrt(252)
+    
+    return {
+        'beta': beta,
+        'alpha': alpha,
+        'sharpe_ratio': sharpe_ratio
+    }
+
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), nullable=False, unique=True)
@@ -111,6 +182,7 @@ class User(db.Model, UserMixin):
 class Stock(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ticker = db.Column(db.String(10), nullable=False)
+    company_name = db.Column(db.String(100), nullable=True)
     purchase_price = db.Column(db.Float, nullable=False)
     shares = db.Column(db.Integer, nullable=False)
     latest_price = db.Column(db.Float, nullable=True)
@@ -201,14 +273,16 @@ def dashboard():
         div_yield = fetch_divyiled(ticker)
         daily_return = fetch_daily_return(ticker)
 
+        # Fetch company name
+        company_name = yf.Ticker(ticker).info.get('shortName', 'N/A')
+
         stock = Stock.query.filter_by(ticker=ticker, user_id=current_user.id).first()
         if stock:
-            # Aggregate shares and recalculate the average purchase price
+            # Update existing stock
             total_investment = (stock.purchase_price * stock.shares) + (purchase_price * shares)
             total_shares = stock.shares + shares
             new_average_purchase_price = total_investment / total_shares
 
-            # Update stock details
             stock.purchase_price = new_average_purchase_price
             stock.shares = total_shares
             stock.latest_price = latest_price
@@ -216,10 +290,12 @@ def dashboard():
             stock.return_performance = calculate_returns(new_average_purchase_price, latest_price)
             stock.forward_pe = forward_pe
             stock.div_yield = div_yield
+            stock.company_name = company_name  # Update company name
         else:
             # Create a new stock entry
             new_stock = Stock(
                 ticker=ticker,
+                company_name=company_name,  # Add company name
                 purchase_price=purchase_price,
                 shares=shares,
                 latest_price=latest_price,
@@ -233,6 +309,7 @@ def dashboard():
 
         db.session.commit()
         return redirect(url_for('dashboard'))
+    
     
     stock_data = Stock.query.filter_by(user_id=current_user.id).all()
 
@@ -256,6 +333,14 @@ def dashboard():
     winning_stocks = sum(1 for stock in stock_data if stock.return_performance > 0)
     win_rate = (winning_stocks / num_stocks) * 100 if num_stocks > 0 else 0
 
+    if stock_data:
+        portfolio_metrics = calculate_portfolio_metrics(stock_data)
+        beta = portfolio_metrics['beta']
+        alpha = portfolio_metrics['alpha']
+        sharpe_ratio = portfolio_metrics['sharpe_ratio']
+    else:
+        beta = alpha = sharpe_ratio = 0
+
     return render_template('dashboard.html', 
                            stocks=stock_data, 
                            portfolio_return=portfolio_return, 
@@ -264,7 +349,10 @@ def dashboard():
                            return_value=return_value,
                            dividend_value=dividend_value,
                            num_stocks=num_stocks,
-                           win_rate=win_rate)
+                           win_rate=win_rate,
+                           beta=beta,
+                           alpha=alpha,
+                           sharpe_ratio=sharpe_ratio)
 
 @app.route('/delete', methods=['POST'])
 def delete():
