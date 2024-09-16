@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, redirect, request
+from flask import Flask, render_template, url_for, redirect, request, send_file, make_response, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
@@ -7,6 +7,7 @@ from wtforms.validators import InputRequired, Length, ValidationError
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from config import Config
+from datetime import datetime, date
 import yfinance as yf
 import matplotlib.pyplot as plt
 plt.switch_backend('Agg')
@@ -20,6 +21,7 @@ import pandas_datareader as pdr
 import numpy as np
 from datetime import datetime, timedelta
 import pytz
+import csv
 
 
 app = Flask(__name__)
@@ -38,15 +40,6 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # Helper functions
-# def fetch_latest_price(ticker):
-#     try:
-#         stock = yf.Ticker(ticker)
-#         latest_price = stock.history(period="1d")['Close'].iloc[-1]
-#         return float(latest_price) if latest_price is not None else 0.0  # Check for None
-#     except Exception:
-#         return 0
-
-
 def fetch_latest_price(ticker):
     try:
         stock = yf.Ticker(ticker)
@@ -185,6 +178,7 @@ class Stock(db.Model):
     company_name = db.Column(db.String(100), nullable=True)
     purchase_price = db.Column(db.Float, nullable=False)
     shares = db.Column(db.Integer, nullable=False)
+    purchase_date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date())
     latest_price = db.Column(db.Float, nullable=True)
     daily_return = db.Column(db.Float, nullable=True, default=0.0)
     return_performance = db.Column(db.Float, nullable=True, default=0.0)
@@ -261,12 +255,14 @@ def register():
     return render_template('register.html', form=form)
 
 @app.route('/dashboard', methods=['GET', 'POST'])
+@login_required
 def dashboard():
     if request.method == 'POST':
         ticker = request.form['ticker']
         purchase_price = float(request.form['purchase_price'])
         shares = int(request.form['num_shares'])
-        
+        purchase_date = datetime.strptime(request.form['purchase_date'], '%Y-%m-%d').date()  # Add this line
+
         latest_price = fetch_latest_price(ticker)
         return_performance = calculate_returns(purchase_price, latest_price)
         forward_pe = fetch_forwardPE(ticker)
@@ -291,12 +287,15 @@ def dashboard():
             stock.forward_pe = forward_pe
             stock.div_yield = div_yield
             stock.company_name = company_name  # Update company name
+            stock.purchase_date = purchase_date  # Add this line
+
         else:
             # Create a new stock entry
             new_stock = Stock(
                 ticker=ticker,
                 company_name=company_name,  # Add company name
                 purchase_price=purchase_price,
+                purchase_date=purchase_date,  # Add this line
                 shares=shares,
                 latest_price=latest_price,
                 daily_return=daily_return,
@@ -341,6 +340,82 @@ def dashboard():
     else:
         beta = alpha = sharpe_ratio = 0
 
+    # Calculate new metrics
+    today = date.today()
+    holding_periods = [(stock, (today - stock.purchase_date).days) for stock in stock_data]
+    
+    if holding_periods:
+        avg_days_held = sum(days for _, days in holding_periods) / len(holding_periods)
+        
+        longest_held = max(holding_periods, key=lambda x: x[1])
+        longest_held_stock, longest_held_days = longest_held
+        
+        shortest_held = min(holding_periods, key=lambda x: x[1])
+        shortest_held_stock, shortest_held_days = shortest_held
+    else:
+        avg_days_held = longest_held_days = shortest_held_days = 0
+        longest_held_stock = shortest_held_stock = None
+
+    # Prepare data for the chart
+    fig, ax = plt.subplots(figsize=(12, 8))  # Increased figure size
+
+    for stock, days_held in holding_periods:
+        # Calculate daily returns
+        stock_history = yf.Ticker(stock.ticker).history(start=stock.purchase_date, end=today)
+        if not stock_history.empty:
+            prices = stock_history['Close']
+            indexed_prices = (prices / prices.iloc[0]) * 100  # Index to 100 at purchase
+            
+            # Plot the line
+            ax.plot(range(len(indexed_prices)), indexed_prices, label=stock.ticker)
+
+    ax.set_xlabel('Days Since Purchase')
+    ax.set_ylabel('Indexed Price (Purchase = 100)')
+    ax.set_title('Stock Performance Since Purchase')
+    ax.grid(True)
+
+    # Adjust legend
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=5, fontsize='small')
+
+    # Adjust layout to make room for the legend
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.2)
+
+    # Convert plot to PNG image
+    img = io.BytesIO()
+    plt.savefig(img, format='png', bbox_inches='tight', dpi=100)
+    img.seek(0)
+    plot_url = base64.b64encode(img.getvalue()).decode()
+
+    plt.close(fig)  # Close the figure to free up memory
+
+    # Calculate Today's Digest
+    end_date = datetime.now().replace(tzinfo=None)  # Use naive datetime
+    start_date = end_date - timedelta(days=5)  # Fetch 5 days to ensure we get the last trading day
+
+    # Function to get the last trading day's performance
+    def get_last_trading_day_performance(ticker):
+        stock = yf.Ticker(ticker)
+        hist = stock.history(start=start_date, end=end_date)
+        if len(hist) >= 2:
+            # Ensure the index is timezone-naive
+            hist.index = hist.index.tz_localize(None)
+            last_close = hist['Close'].iloc[-1]
+            prev_close = hist['Close'].iloc[-2]
+            return (last_close - prev_close) / prev_close * 100
+        return 0
+
+    # Calculate portfolio performance
+    portfolio_performance = 0
+    total_value = sum(stock.latest_price * stock.shares for stock in stock_data)
+    for stock in stock_data:
+        stock_performance = get_last_trading_day_performance(stock.ticker)
+        stock_value = stock.latest_price * stock.shares
+        portfolio_performance += stock_performance * (stock_value / total_value) if total_value > 0 else 0
+
+    # Get Nikkei 225 performance
+    nikkei_performance = get_last_trading_day_performance('^N225')
+
     return render_template('dashboard.html', 
                            stocks=stock_data, 
                            portfolio_return=portfolio_return, 
@@ -352,7 +427,15 @@ def dashboard():
                            win_rate=win_rate,
                            beta=beta,
                            alpha=alpha,
-                           sharpe_ratio=sharpe_ratio)
+                           sharpe_ratio=sharpe_ratio,
+                           avg_days_held=avg_days_held,
+                           longest_held_stock=longest_held_stock,
+                           longest_held_days=longest_held_days,
+                           shortest_held_stock=shortest_held_stock,
+                           shortest_held_days=shortest_held_days,
+                           performance_chart=plot_url,
+                           portfolio_performance=portfolio_performance,
+                           nikkei_performance=nikkei_performance)
 
 @app.route('/delete', methods=['POST'])
 def delete():
@@ -363,13 +446,7 @@ def delete():
         db.session.commit()
     return redirect(url_for('dashboard'))
 
-# @app.route('/stockan', methods=['GET', 'POST'])
-# def stockan():
-#     if request.method == 'POST':
-#         ticker = request.form['ticker']
-#         stock_info = get_stock_info(ticker)
-#         return render_template('stockan.html', stock_info=stock_info)
-#     return render_template('stockan.html')
+
 
 # Update the stockan route
 @app.route('/stockan', methods=['GET', 'POST'])
@@ -492,6 +569,51 @@ def get_stock_info(ticker):
         print(f"Error fetching stock info for {ticker}: {str(e)}")
         return None
 
+@app.route('/download_csv')
+@login_required
+def download_csv():
+    stocks = Stock.query.filter_by(user_id=current_user.id).all()
+    
+    # Create a StringIO object to write CSV data
+    si = io.StringIO()
+    cw = csv.writer(si)
+    
+    # Write the header
+    cw.writerow(['Ticker', 'Company Name', 'Purchase Date', 'Purchase Price', 'Shares', 'Latest Price', 'Return Performance', 'Dividend Yield'])
+    
+    # Write the data
+    for stock in stocks:
+        cw.writerow([
+            stock.ticker,
+            stock.company_name,
+            stock.purchase_date.strftime('%Y-%m-%d'),
+            stock.purchase_price,
+            stock.shares,
+            stock.latest_price,
+            stock.return_performance,
+            stock.div_yield
+        ])
+    
+    # Create a response
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename=stock_database.csv"
+    output.headers["Content-type"] = "text/csv"
+    
+    return output
+
+@app.route('/edit_stock/<int:stock_id>', methods=['GET', 'POST'])
+@login_required
+def edit_stock(stock_id):
+    stock = Stock.query.get_or_404(stock_id)
+    if request.method == 'POST':
+        stock.ticker = request.form['ticker']
+        stock.purchase_price = float(request.form['purchase_price'])
+        stock.shares = int(request.form['num_shares'])
+        stock.purchase_date = datetime.strptime(request.form['purchase_date'], '%Y-%m-%d').date()
+        db.session.commit()
+        flash('Stock updated successfully', 'success')
+        return redirect(url_for('dashboard'))
+    return render_template('edit_stock.html', stock=stock)
 
 if __name__ == "__main__":
     app.run(debug=True)

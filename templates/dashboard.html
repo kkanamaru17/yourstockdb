@@ -19,8 +19,7 @@
         <a href="{{ url_for('logout') }}">Logout</a><br>
         <a href="{{ url_for('stockan') }}">Stock Analysis</a><span>: to see info on a stock click here</span><br><br>
         <form action="{{ url_for('dashboard') }}" method="post">
-            <label for="ticker">Stock Ticker:</label>
-            
+            <label for="ticker">Stock Ticker:</label>            
             <input type="text" id="ticker" name="ticker" required>
             
             <label for="purchase_price">Purchase Price:</label>
@@ -28,6 +27,9 @@
             
             <label for="num_shares">Number of Shares:</label>
             <input type="number" id="num_shares" name="num_shares" step="1" required>
+            
+            <label for="purchase_date">Purchase Date:</label>
+            <input type="date" id="purchase_date" name="purchase_date" required>
             
             <button type="submit">Add Data</button>
         </form>
@@ -43,6 +45,7 @@
                         <th>Latest Price</th>
                         <th>Return</th>
                         <th>Dividend Yield</th>
+                        <th>Purchase Date</th>  <!-- Add this line -->
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -56,7 +59,9 @@
                         <td>{{ stock.latest_price|round(2) }}</td>
                         <td>{{ stock.return_performance|round(2) }}%</td>
                         <td>{{ stock.div_yield|round(2) }}%</td>
+                        <td>{{ stock.purchase_date.strftime('%Y-%m-%d') }}</td>  <!-- Add this line -->
                         <td>
+                            <a href="{{ url_for('edit_stock', stock_id=stock.id) }}" class="edit-btn">Edit</a>
                             <form action="/delete" method="post">
                                 <input type="hidden" name="ticker" value="{{ stock.ticker }}">
                                 <button type="submit" class="delete-btn">Delete</button>
@@ -85,8 +90,14 @@
                 {% endfor %}
             </div>
         </div>
+        <a href="{{ url_for('download_csv') }}" class="btn btn-primary">Download Stock Database (CSV)</a>
         <h2>Portfolio Return: {{ portfolio_return|round(2) }}%</h2>
         <h3>with dividend: {{ portfolio_return_withdiv|round(2) }}%</h3>
+        <h3>Today's Digest:</h3>
+        <ul>
+            <li>Portfolio Performance: {{ '{:+.2f}%'.format(portfolio_performance) }}</li>
+            <li>Nikkei 225 Performance: {{ '{:+.2f}%'.format(nikkei_performance) }}</li>
+        </ul>
         <h3>Portfolio Summary:</h3>
         <ul>
             <li>Total Value: {{ '{:,}'.format(total_value|round(0)|int) }}</li>
@@ -97,7 +108,20 @@
             <li>Portfolio Beta: {{ beta|round(2) }}</li>
             <li>Portfolio Alpha: {{ alpha|round(2) }}%</li>
             <li>Sharpe Ratio: {{ sharpe_ratio|round(2) }}</li>
+            <li>Average Days Held: {{ avg_days_held|round(0)|int }}</li>
+            {% if longest_held_stock %}
+            <li>Longest Held: {{ longest_held_stock.company_name }} ({{ longest_held_days }} days)</li>
+            {% endif %}
+            {% if shortest_held_stock %}
+            <li>Shortest Held: {{ shortest_held_stock.company_name }} ({{ shortest_held_days }} days)</li>
+            {% endif %}
         </ul>
+        <!-- Add the performance chart section here -->
+        <section class="portfolio-performance">
+            <h3>Portfolio Performance</h3>
+            <img src="data:image/png;base64,{{ performance_chart }}" alt="Portfolio Performance Chart">
+        </section>
+
     </div> <!-- Close the main container div if you have one -->
 
     <footer class="footer">
