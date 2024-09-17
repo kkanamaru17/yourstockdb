@@ -35,43 +35,46 @@
         </form>
         <h2>Stock Data</h2>
         <div class="stock-data">
-            <table class="stock-table">
-                <thead>
-                    <tr>
-                        <th>Ticker</th>
-                        <th class="company-name">Company Name</th>
-                        <th>Purchase Price</th>
-                        <th>Shares</th>
-                        <th>Latest Price</th>
-                        <th>Return</th>
-                        <th>Dividend Yield</th>
-                        <th>Purchase Date</th>  <!-- Add this line -->
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for stock in stocks %}
-                    <tr>
-                        <td><a href="{{ url_for('stockan', ticker=stock.ticker) }}">{{ stock.ticker }}</a></td>
-                        <td class="company-name" title="{{ stock.company_name }}">{{ stock.company_name }}</td>
-                        <td>{{ stock.purchase_price|round(2) }}</td>
-                        <td>{{ stock.shares }}</td>
-                        <td>{{ stock.latest_price|round(2) }}</td>
-                        <td>{{ stock.return_performance|round(2) }}%</td>
-                        <td>{{ stock.div_yield|round(2) }}%</td>
-                        <td>{{ stock.purchase_date.strftime('%Y-%m-%d') }}</td>  <!-- Add this line -->
-                        <td>
-                            <a href="{{ url_for('edit_stock', stock_id=stock.id) }}" class="edit-btn">Edit</a>
-                            <form action="/delete" method="post">
-                                <input type="hidden" name="ticker" value="{{ stock.ticker }}">
-                                <button type="submit" class="delete-btn">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
+            <div class="table-container">
+                <table class="stock-table">
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th class="company-name">Company Name</th>
+                            <th>Purchase Price</th>
+                            <th>Shares</th>
+                            <th>Latest Price</th>
+                            <th>Capital Gain</th>
+                            <th>Income Gain</th>
+                            <th>Dividend Yield</th>
+                            <th>Purchase Date</th>  <!-- Add this line -->
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stock in stocks %}
+                        <tr>
+                            <td><a href="{{ url_for('stockan', ticker=stock.ticker) }}">{{ stock.ticker }}</a></td>
+                            <td class="company-name" title="{{ stock.company_name }}">{{ stock.company_name }}</td>
+                            <td>{{ stock.purchase_price|round(2) }}</td>
+                            <td>{{ stock.shares }}</td>
+                            <td>{{ stock.latest_price|round(2) }}</td>
+                            <td>{{ stock.return_performance|round(2) }}%</td>
+                            <td>{{ stock.income_gain_pct|round(2) }}%</td>
+                            <td>{{ stock.div_yield|round(2) }}%</td>
+                            <td>{{ stock.purchase_date.strftime('%Y-%m-%d') }}</td>  <!-- Add this line -->
+                            <td>
+                                <a href="{{ url_for('edit_stock', stock_id=stock.id) }}" class="edit-btn">Edit</a>
+                                <form action="/delete" method="post">
+                                    <input type="hidden" name="ticker" value="{{ stock.ticker }}">
+                                    <button type="submit" class="delete-btn">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
             <div class="stock-cards">
                 {% for stock in stocks %}
                 <div class="stock-card">
@@ -80,7 +83,8 @@
                     <p>Purchase Price: {{ stock.purchase_price|round(2) }}</p>
                     <p>Shares: {{ stock.shares }}</p>
                     <p>Latest Price: {{ stock.latest_price|round(2) }}</p>
-                    <p>Return: {{ stock.return_performance|round(2) }}%</p>
+                    <p>Capital Gain: {{ stock.return_performance|round(2) }}%</p>
+                    <p>Income Gain: {{ stock.income_gain_pct|round(2) }}%</p>
                     <p>Dividend Yield: {{ stock.div_yield|round(2) }}%</p>
                     <form action="/delete" method="post">
                         <input type="hidden" name="ticker" value="{{ stock.ticker }}">
@@ -92,7 +96,7 @@
         </div>
         <a href="{{ url_for('download_csv') }}" class="btn btn-primary">Download Stock Database (CSV)</a>
         <h2>Portfolio Return: {{ portfolio_return|round(2) }}%</h2>
-        <h3>with dividend: {{ portfolio_return_withdiv|round(2) }}%</h3>
+        <h3>with dividend: {{ portfolio_return_withincome|round(2) }}%</h3>
         <h3>Today's Digest:</h3>
         <ul>
             <li>Portfolio Performance: {{ '{:+.2f}%'.format(portfolio_performance) }}</li>
@@ -101,6 +105,7 @@
         <h3>Portfolio Summary:</h3>
         <ul>
             <li>Total Value: {{ '{:,}'.format(total_value|round(0)|int) }}</li>
+            <li>Total Income Gain: {{ '{:,}'.format(total_income_gain|round(0)|int) }}</li>
             <li>Return: {{ '{:,}'.format(return_value|round(0)|int) }}</li>
             <li>Dividend: {{ '{:,}'.format(dividend_value|round(0)|int) }}</li>
             <li>Number of Stocks: {{ num_stocks }}</li>

@@ -166,6 +166,33 @@ def calculate_portfolio_metrics(stocks_data):
         'sharpe_ratio': sharpe_ratio
     }
 
+from datetime import datetime, date
+
+def calculate_income_gain_pct(ticker, purchase_date, purchase_price):
+    try:
+        stock_data = yf.Ticker(ticker)
+        
+        # Get dividend history
+        dividends = stock_data.dividends
+        dividends.index = dividends.index.tz_localize(None)
+        
+        # Convert purchase_date to datetime if it's a date
+        if isinstance(purchase_date, date):
+            purchase_date = datetime.combine(purchase_date, datetime.min.time())
+        
+        # Filter dividends after the purchase date
+        dividends_after_purchase = dividends[dividends.index >= purchase_date]
+        
+        # Calculate total dividends received (Income Gain)
+        total_dividends_received = dividends_after_purchase.sum()
+        
+        # Income Gain Return % calculation
+        income_gain_return_pct = (total_dividends_received / purchase_price) * 100
+        
+        return float(income_gain_return_pct)  # Convert to Python float
+    except Exception as e:
+        print(f"Error calculating income gain for {ticker}: {e}")
+        return 0.0
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -185,6 +212,7 @@ class Stock(db.Model):
     forward_pe = db.Column(db.Float, nullable=True, default=0.0)
     div_yield = db.Column(db.Float, nullable=True, default=0.0)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    income_gain_pct = db.Column(db.Float, nullable=True, default=0.0)
 
 class StockMemo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -317,15 +345,23 @@ def dashboard():
         stock.latest_price = fetch_latest_price(stock.ticker)
         stock.daily_return = fetch_daily_return(stock.ticker)
         stock.return_performance = calculate_returns(stock.purchase_price, stock.latest_price)
-    
+        
+        # Calculate income gain percentage and convert to Python float
+        income_gain_pct = calculate_income_gain_pct(stock.ticker, stock.purchase_date, stock.purchase_price)
+        stock.income_gain_pct = float(income_gain_pct)  # Convert np.float64 to Python float
+
     db.session.commit()
 
     portfolio_return = calculate_portfolio_return(stock_data) if stock_data else 0
     portfolio_return_withdiv = calculate_portfolio_return_withdiv(stock_data) if stock_data else 0
-
+    total_cost = sum(stock.purchase_price * stock.shares for stock in stock_data)
+    total_income_gain_pct = sum(stock.income_gain_pct * (stock.purchase_price * stock.shares) / total_cost for stock in stock_data) if total_cost > 0 else 0
+    portfolio_return_withincome = portfolio_return + total_income_gain_pct
+    
     # Calculate new metrics
     total_value = sum(stock.latest_price * stock.shares for stock in stock_data)
     total_cost = sum(stock.purchase_price * stock.shares for stock in stock_data)
+    total_income_gain = total_cost * total_income_gain_pct/100
     return_value = total_value - total_cost
     dividend_value = sum((stock.div_yield / 100) * stock.latest_price * stock.shares for stock in stock_data)
     num_stocks = len(stock_data)
@@ -416,6 +452,9 @@ def dashboard():
     # Get Nikkei 225 performance
     nikkei_performance = get_last_trading_day_performance('^N225')
 
+    # Calculate total income gain percentage (weighted average)
+    total_income_gain_pct = sum(stock.income_gain_pct * (stock.purchase_price * stock.shares) / total_cost for stock in stock_data) if total_cost > 0 else 0
+
     return render_template('dashboard.html', 
                            stocks=stock_data, 
                            portfolio_return=portfolio_return, 
@@ -435,7 +474,10 @@ def dashboard():
                            shortest_held_days=shortest_held_days,
                            performance_chart=plot_url,
                            portfolio_performance=portfolio_performance,
-                           nikkei_performance=nikkei_performance)
+                           nikkei_performance=nikkei_performance,
+                           total_income_gain_pct=total_income_gain_pct,
+                           portfolio_return_withincome=portfolio_return_withincome,
+                           total_income_gain=total_income_gain)
 
 @app.route('/delete', methods=['POST'])
 def delete():
