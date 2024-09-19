@@ -557,19 +557,24 @@ def today():
     stock_performances = []
     for stock in stock_data:
         performance, _ = get_last_trading_day_performance(stock.ticker)
-        stock_performances.append((stock.ticker, performance))
+        stock_performances.append((stock.company_name, performance))
 
     # Sort performances from best to worst
     stock_performances.sort(key=lambda x: x[1], reverse=True)
 
     # Create horizontal bar chart
     fig, ax = plt.subplots(figsize=(8, max(4, len(stock_performances) * 0.4)))
-    tickers, performances = zip(*stock_performances)
-    y_pos = range(len(tickers))
+    company_names, performances = zip(*stock_performances)
+    
+    # Truncate long company names
+    max_name_length = 20
+    truncated_names = [name[:max_name_length] + '...' if len(name) > max_name_length else name for name in company_names]
+    
+    y_pos = range(len(company_names))
     
     bars = ax.barh(y_pos, performances, align='center', color='white', edgecolor='black')
     ax.set_yticks(y_pos)
-    ax.set_yticklabels(tickers)
+    ax.set_yticklabels(truncated_names)
     ax.invert_yaxis()  # Labels read top-to-bottom
     ax.set_xlabel('Performance (%)')
     ax.set_title("Today's Stock Performances")
