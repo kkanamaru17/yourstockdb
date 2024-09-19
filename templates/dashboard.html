@@ -110,9 +110,6 @@
             <li>Dividend: {{ '{:,}'.format(dividend_value|round(0)|int) }}</li>
             <li>Number of Stocks: {{ num_stocks }}</li>
             <li>Win Rate: {{ win_rate|round(2) }}%</li>
-            <!-- <li>Portfolio Beta: {{ beta|round(2) }}</li>
-            <li>Portfolio Alpha: {{ alpha|round(2) }}%</li>
-            <li>Sharpe Ratio: {{ sharpe_ratio|round(2) }}</li> -->
             <li>Average Days Held: {{ avg_days_held|round(0)|int }}</li>
             {% if longest_held_stock %}
             <li>Longest Held: {{ longest_held_stock.company_name }} ({{ longest_held_days }} days)</li>

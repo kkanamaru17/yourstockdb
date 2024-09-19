@@ -22,13 +22,14 @@ import numpy as np
 from datetime import datetime, timedelta
 import pytz
 import csv
-
+from flask_caching import Cache
 
 app = Flask(__name__)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 migrate = Migrate(app, db)
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -40,6 +41,7 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # Helper functions
+@cache.memoize(timeout=900)
 def fetch_latest_price(ticker):
     try:
         stock = yf.Ticker(ticker)
@@ -53,7 +55,8 @@ def fetch_latest_price(ticker):
     except Exception as e:
         print(f"Error fetching latest price for {ticker}: {e}")
         return 0.0
-    
+
+@cache.memoize(timeout=900)
 def fetch_daily_return(ticker):
     try:
         stock = yf.Ticker(ticker)
@@ -167,7 +170,7 @@ def calculate_portfolio_metrics(stocks_data):
     }
 
 from datetime import datetime, date
-
+@cache.memoize(timeout=3600)
 def calculate_income_gain_pct(ticker, purchase_date, purchase_price):
     try:
         stock_data = yf.Ticker(ticker)
@@ -368,13 +371,13 @@ def dashboard():
     winning_stocks = sum(1 for stock in stock_data if stock.return_performance > 0)
     win_rate = (winning_stocks / num_stocks) * 100 if num_stocks > 0 else 0
 
-    if stock_data:
-        portfolio_metrics = calculate_portfolio_metrics(stock_data)
-        beta = portfolio_metrics['beta']
-        alpha = portfolio_metrics['alpha']
-        sharpe_ratio = portfolio_metrics['sharpe_ratio']
-    else:
-        beta = alpha = sharpe_ratio = 0
+    # if stock_data:
+    #     portfolio_metrics = calculate_portfolio_metrics(stock_data)
+    #     beta = portfolio_metrics['beta']
+    #     alpha = portfolio_metrics['alpha']
+    #     sharpe_ratio = portfolio_metrics['sharpe_ratio']
+    # else:
+    #     beta = alpha = sharpe_ratio = 0
 
     # Calculate new metrics
     today = date.today()
@@ -392,38 +395,38 @@ def dashboard():
         avg_days_held = longest_held_days = shortest_held_days = 0
         longest_held_stock = shortest_held_stock = None
 
-    # Prepare data for the chart
-    fig, ax = plt.subplots(figsize=(12, 8))  # Increased figure size
+    # # Prepare data for the chart
+    # fig, ax = plt.subplots(figsize=(12, 8))  # Increased figure size
 
-    for stock, days_held in holding_periods:
-        # Calculate daily returns
-        stock_history = yf.Ticker(stock.ticker).history(start=stock.purchase_date, end=today)
-        if not stock_history.empty:
-            prices = stock_history['Close']
-            indexed_prices = (prices / prices.iloc[0]) * 100  # Index to 100 at purchase
+    # for stock, days_held in holding_periods:
+    #     # Calculate daily returns
+    #     stock_history = yf.Ticker(stock.ticker).history(start=stock.purchase_date, end=today)
+    #     if not stock_history.empty:
+    #         prices = stock_history['Close']
+    #         indexed_prices = (prices / prices.iloc[0]) * 100  # Index to 100 at purchase
             
-            # Plot the line
-            ax.plot(range(len(indexed_prices)), indexed_prices, label=stock.ticker)
+    #         # Plot the line
+    #         ax.plot(range(len(indexed_prices)), indexed_prices, label=stock.ticker)
 
-    ax.set_xlabel('Days Since Purchase')
-    ax.set_ylabel('Indexed Price (Purchase = 100)')
-    ax.set_title('Stock Performance Since Purchase')
-    ax.grid(True)
+    # ax.set_xlabel('Days Since Purchase')
+    # ax.set_ylabel('Indexed Price (Purchase = 100)')
+    # ax.set_title('Stock Performance Since Purchase')
+    # ax.grid(True)
 
-    # Adjust legend
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=5, fontsize='small')
+    # # Adjust legend
+    # ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=5, fontsize='small')
 
-    # Adjust layout to make room for the legend
-    plt.tight_layout()
-    plt.subplots_adjust(bottom=0.2)
+    # # Adjust layout to make room for the legend
+    # plt.tight_layout()
+    # plt.subplots_adjust(bottom=0.2)
 
-    # Convert plot to PNG image
-    img = io.BytesIO()
-    plt.savefig(img, format='png', bbox_inches='tight', dpi=100)
-    img.seek(0)
-    plot_url = base64.b64encode(img.getvalue()).decode()
+    # # Convert plot to PNG image
+    # img = io.BytesIO()
+    # plt.savefig(img, format='png', bbox_inches='tight', dpi=100)
+    # img.seek(0)
+    # plot_url = base64.b64encode(img.getvalue()).decode()
 
-    plt.close(fig)  # Close the figure to free up memory
+    # plt.close(fig)  # Close the figure to free up memory
 
     # Calculate Today's Digest
     end_date = datetime.now().replace(tzinfo=None)  # Use naive datetime
@@ -464,15 +467,15 @@ def dashboard():
                            dividend_value=dividend_value,
                            num_stocks=num_stocks,
                            win_rate=win_rate,
-                           beta=beta,
-                           alpha=alpha,
-                           sharpe_ratio=sharpe_ratio,
+                        #    beta=beta,
+                        #    alpha=alpha,
+                        #    sharpe_ratio=sharpe_ratio,
                            avg_days_held=avg_days_held,
                            longest_held_stock=longest_held_stock,
                            longest_held_days=longest_held_days,
                            shortest_held_stock=shortest_held_stock,
                            shortest_held_days=shortest_held_days,
-                           performance_chart=plot_url,
+                        #    performance_chart=plot_url,
                            portfolio_performance=portfolio_performance,
                            nikkei_performance=nikkei_performance,
                            total_income_gain_pct=total_income_gain_pct,
@@ -621,7 +624,7 @@ def download_csv():
     cw = csv.writer(si)
     
     # Write the header
-    cw.writerow(['Ticker', 'Company Name', 'Purchase Date', 'Purchase Price', 'Shares', 'Latest Price', 'Return Performance', 'Dividend Yield'])
+    cw.writerow(['Ticker', 'Company Name', 'Purchase Date', 'Purchase Price', 'Shares', 'Latest Price', 'Return Performance', 'Income Gain','Dividend Yield'])
     
     # Write the data
     for stock in stocks:
@@ -633,6 +636,7 @@ def download_csv():
             stock.shares,
             stock.latest_price,
             stock.return_performance,
+            stock.income_gain_pct,
             stock.div_yield
         ])
     
