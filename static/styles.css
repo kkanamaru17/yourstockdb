@@ -345,3 +345,85 @@ textarea {
     height: auto;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
+
+.todays-digest {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.todays-digest ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.todays-digest li {
+    margin-bottom: 5px;
+}
+
+.positive-performance {
+    color: #28a745;
+}
+
+.negative-performance {
+    color: #dc3545;
+}
+
+.performance-chart {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.performance-chart img {
+    max-width: 100%;
+    height: auto;
+    width: auto;
+    max-height: 80vh; /* Limit height to 80% of viewport height */
+    object-fit: contain;
+}
+
+@media (max-width: 768px) {
+    .performance-chart img {
+        max-height: none; /* Remove max-height restriction on smaller screens */
+    }
+}
+
+.todays-digest h3 {
+    font-size: 1.2em;
+    margin: 10px 0;
+    font-weight: 600;
+    color: #333;
+}
+
+.todays-digest h3 span {
+    font-weight: 400;
+}
+
+.date-info {
+    font-size: 0.8em;
+    color: #6c757d;
+    font-weight: normal;
+    margin-left: 5px;
+}
+
+.stockdb-button {
+    display: inline-block;
+    padding: 6px 12px;
+    background-color: #f8f9fa;
+    color: #333;
+    text-decoration: none;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-weight: normal;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    margin-bottom: 15px;
+}
+
+.stockdb-button:hover {
+    background-color: #e9ecef;
+    color: #000;
+    text-decoration: none;
+}

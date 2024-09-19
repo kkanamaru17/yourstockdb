@@ -309,7 +309,6 @@ def dashboard():
             total_investment = (stock.purchase_price * stock.shares) + (purchase_price * shares)
             total_shares = stock.shares + shares
             new_average_purchase_price = total_investment / total_shares
-
             stock.purchase_price = new_average_purchase_price
             stock.shares = total_shares
             stock.latest_price = latest_price
@@ -433,27 +432,27 @@ def dashboard():
     start_date = end_date - timedelta(days=5)  # Fetch 5 days to ensure we get the last trading day
 
     # Function to get the last trading day's performance
-    def get_last_trading_day_performance(ticker):
-        stock = yf.Ticker(ticker)
-        hist = stock.history(start=start_date, end=end_date)
-        if len(hist) >= 2:
-            # Ensure the index is timezone-naive
-            hist.index = hist.index.tz_localize(None)
-            last_close = hist['Close'].iloc[-1]
-            prev_close = hist['Close'].iloc[-2]
-            return (last_close - prev_close) / prev_close * 100
-        return 0
+    # def get_last_trading_day_performance(ticker):
+    #     stock = yf.Ticker(ticker)
+    #     hist = stock.history(start=start_date, end=end_date)
+    #     if len(hist) >= 2:
+    #         # Ensure the index is timezone-naive
+    #         hist.index = hist.index.tz_localize(None)
+    #         last_close = hist['Close'].iloc[-1]
+    #         prev_close = hist['Close'].iloc[-2]
+    #         return (last_close - prev_close) / prev_close * 100
+    #     return 0
 
     # Calculate portfolio performance
-    portfolio_performance = 0
-    total_value = sum(stock.latest_price * stock.shares for stock in stock_data)
-    for stock in stock_data:
-        stock_performance = get_last_trading_day_performance(stock.ticker)
-        stock_value = stock.latest_price * stock.shares
-        portfolio_performance += stock_performance * (stock_value / total_value) if total_value > 0 else 0
+    # portfolio_performance = 0
+    # total_value = sum(stock.latest_price * stock.shares for stock in stock_data)
+    # for stock in stock_data:
+    #     stock_performance = get_last_trading_day_performance(stock.ticker)
+    #     stock_value = stock.latest_price * stock.shares
+    #     portfolio_performance += stock_performance * (stock_value / total_value) if total_value > 0 else 0
 
-    # Get Nikkei 225 performance
-    nikkei_performance = get_last_trading_day_performance('^N225')
+    # # Get Nikkei 225 performance
+    # nikkei_performance = get_last_trading_day_performance('^N225')
 
     # Calculate total income gain percentage (weighted average)
     total_income_gain_pct = sum(stock.income_gain_pct * (stock.purchase_price * stock.shares) / total_cost for stock in stock_data) if total_cost > 0 else 0
@@ -476,9 +475,9 @@ def dashboard():
                            shortest_held_stock=shortest_held_stock,
                            shortest_held_days=shortest_held_days,
                         #    performance_chart=plot_url,
-                           portfolio_performance=portfolio_performance,
-                           nikkei_performance=nikkei_performance,
-                           total_income_gain_pct=total_income_gain_pct,
+                        #    portfolio_performance=portfolio_performance,
+                        #    nikkei_performance=nikkei_performance,
+                        #    total_income_gain_pct=total_income_gain_pct,
                            portfolio_return_withincome=portfolio_return_withincome,
                            total_income_gain=total_income_gain)
 
@@ -513,6 +512,97 @@ def stockan():
         return render_template('stockan.html', stock_info=stock_info, ticker=ticker)
     
     return render_template('stockan.html')
+
+# Function to get the last trading day's performance
+def get_last_trading_day_performance(ticker):
+    try:
+        # Set timezone to Japan Standard Time (JST)
+        jst = pytz.timezone('Asia/Tokyo')
+        end_date = datetime.now(jst)
+        start_date = end_date - timedelta(days=5)  # Fetch 5 days to ensure we get the last trading day
+
+        stock = yf.Ticker(ticker)
+        hist = stock.history(start=start_date, end=end_date)
+
+        if len(hist) >= 2:
+            last_close = hist['Close'].iloc[-1]
+            prev_close = hist['Close'].iloc[-2]
+            last_date = hist.index[-1].strftime('%Y-%m-%d')
+            return (last_close - prev_close) / prev_close * 100, last_date
+        return 0, None
+    except Exception as e:
+        print(f"Error fetching data for {ticker}: {e}")
+        return 0, None
+
+@app.route('/today')
+@login_required
+@cache.memoize(timeout=900)
+def today():
+    # Get user's stocks
+    stock_data = Stock.query.filter_by(user_id=current_user.id).all()
+
+    # Calculate portfolio performance
+    portfolio_performance = 0
+    total_value = sum(stock.latest_price * stock.shares for stock in stock_data)
+    if total_value > 0:
+        for stock in stock_data:
+            stock_performance, _ = get_last_trading_day_performance(stock.ticker)
+            stock_value = stock.latest_price * stock.shares
+            portfolio_performance += stock_performance * (stock_value / total_value)
+
+    # Get Nikkei 225 performance
+    nikkei_performance, nikkei_date = get_last_trading_day_performance('^N225')
+
+    # Calculate individual stock performances
+    stock_performances = []
+    for stock in stock_data:
+        performance, _ = get_last_trading_day_performance(stock.ticker)
+        stock_performances.append((stock.ticker, performance))
+
+    # Sort performances from best to worst
+    stock_performances.sort(key=lambda x: x[1], reverse=True)
+
+    # Create horizontal bar chart
+    fig, ax = plt.subplots(figsize=(8, max(4, len(stock_performances) * 0.4)))
+    tickers, performances = zip(*stock_performances)
+    y_pos = range(len(tickers))
+    
+    bars = ax.barh(y_pos, performances, align='center', color='white', edgecolor='black')
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(tickers)
+    ax.invert_yaxis()  # Labels read top-to-bottom
+    ax.set_xlabel('Performance (%)')
+    ax.set_title("Today's Stock Performances")
+
+    # Add performance labels to the end of each bar
+    for i, bar in enumerate(bars):
+        width = bar.get_width()
+        ax.text(width, bar.get_y() + bar.get_height()/2, f'{performances[i]:.2f}%', 
+                ha='left', va='center', fontweight='bold', color='black', fontsize=8)
+
+    # Remove top and right spines
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    # Set background color to white
+    ax.set_facecolor('white')
+    fig.patch.set_facecolor('white')
+
+    # Adjust layout to prevent cutoff
+    plt.tight_layout()
+
+    # Save plot to a base64 string
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+    buffer.seek(0)
+    plot_data = base64.b64encode(buffer.getvalue()).decode()
+    plt.close(fig)
+
+    return render_template('today.html',
+                           portfolio_performance=portfolio_performance,
+                           nikkei_performance=nikkei_performance,
+                           nikkei_date=nikkei_date,
+                           performance_chart=plot_data)
 
 # Update the route for saving the memo
 @app.route('/save_memo', methods=['POST'])

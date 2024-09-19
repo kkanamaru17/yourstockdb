@@ -97,11 +97,8 @@
         <a href="{{ url_for('download_csv') }}" class="btn btn-primary">Download Stock Database (CSV)</a>
         <h2>Portfolio Return: {{ portfolio_return|round(2) }}%</h2>
         <h3>with dividend: {{ portfolio_return_withincome|round(2) }}%</h3>
-        <h3>Today's Digest:</h3>
-        <ul>
-            <li>Portfolio Performance: {{ '{:+.2f}%'.format(portfolio_performance) }}</li>
-            <li>Nikkei 225 Performance: {{ '{:+.2f}%'.format(nikkei_performance) }}</li>
-        </ul>
+        <a href="{{ url_for('today') }}">Today's Digest</a>
+
         <h3>Portfolio Summary:</h3>
         <ul>
             <li>Total Value: {{ '{:,}'.format(total_value|round(0)|int) }}</li>
