@@ -582,8 +582,9 @@ def today():
     # Add performance labels to the end of each bar
     for i, bar in enumerate(bars):
         width = bar.get_width()
-        ax.text(width, bar.get_y() + bar.get_height()/2, f'{performances[i]:.2f}%', 
-                ha='left', va='center', fontweight='bold', color='black', fontsize=8)
+        gap = 0.03
+        ax.text(width + gap, bar.get_y() + bar.get_height()/2, f'{performances[i]:.2f}%', 
+                ha='left', va='center', color='black', fontsize=12)
 
     # Remove top and right spines
     ax.spines['top'].set_visible(False)
