@@ -45,16 +45,14 @@ login_manager.login_view = 'login'
 app.config['GOOGLE_OAUTH_CLIENT_ID'] = os.environ.get('GOOGLE_OAUTH_CLIENT_ID')
 app.config['GOOGLE_OAUTH_CLIENT_SECRET'] = os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET')
 
-google_bp = make_google_blueprint(
-    scope=["https://www.googleapis.com/auth/userinfo.email", 
-           "https://www.googleapis.com/auth/userinfo.profile",
-           "openid"]
-)
+google_bp = make_google_blueprint(scope=['profile', 'email'])
 app.register_blueprint(google_bp, url_prefix='/login')
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    if user_id is not None:
+        return User.query.get(int(user_id))
+    return None
 
 # Helper functions
 @cache.memoize(timeout=900)
