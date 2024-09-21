@@ -51,7 +51,6 @@ google_bp = make_google_blueprint(
     scope=["profile", "email"]
 )
 app.register_blueprint(google_bp, url_prefix="/login")
-app.register_blueprint(google_bp, url_prefix='/login')
 
 @login_manager.user_loader
 def load_user(user_id):
