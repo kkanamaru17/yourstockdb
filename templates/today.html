@@ -16,12 +16,12 @@
         <h1>Today's Digest</h1>
         <a href="{{ url_for('dashboard') }}">Back to Stock DB</a><br><br>
         <div class="todays-digest">
-            <h3>Portfolio Performance: 
+            <h3>Portfolio: 
                 <span class="{{ 'positive-performance' if portfolio_performance and portfolio_performance >= 0 else 'negative-performance' }}">
                     {{ '{:+.2f}%'.format(portfolio_performance|default(0)) }}
                 </span>
             </h3>
-            <h3>Nikkei 225 Performance: 
+            <h3>Nikkei 225: 
                 <span class="{{ 'positive-performance' if nikkei_performance and nikkei_performance >= 0 else 'negative-performance' }}">
                     {{ '{:+.2f}%'.format(nikkei_performance|default(0)) }}
                 </span>
@@ -33,5 +33,6 @@
         <div class="performance-chart">
             <img src="data:image/png;base64,{{ performance_chart }}" alt="Stock Performances">
         </div>
+        <img src="static/images/agent2.jpg" alt="Dog" class="agent-image">
     </div>
 </body>

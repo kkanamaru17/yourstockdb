@@ -23,6 +23,13 @@ from datetime import datetime, timedelta
 import pytz
 import csv
 from flask_caching import Cache
+from flask_dance.contrib.google import make_google_blueprint, google
+from flask_dance.consumer.storage.sqla import SQLAlchemyStorage
+from flask_dance.consumer import oauth_authorized
+from sqlalchemy.orm.exc import NoResultFound
+import os
+from dotenv import load_dotenv
+load_dotenv()  # This loads the variables from .env
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -35,6 +42,11 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+app.config['GOOGLE_OAUTH_CLIENT_ID'] = os.environ.get('GOOGLE_OAUTH_CLIENT_ID')
+app.config['GOOGLE_OAUTH_CLIENT_SECRET'] = os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET')
+
+google_bp = make_google_blueprint(scope=['profile', 'email'])
+app.register_blueprint(google_bp, url_prefix='/login')
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -221,6 +233,61 @@ class StockMemo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ticker = db.Column(db.String(10), unique=True, nullable=False)
     memo = db.Column(db.Text)
+
+class OAuth(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    provider = db.Column(db.String(50), nullable=False)
+    provider_user_id = db.Column(db.String(256), unique=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)
+    user = db.relationship(User)
+
+google_bp.storage = SQLAlchemyStorage(OAuth, db.session, user=current_user)
+
+@oauth_authorized.connect_via(google_bp)
+def google_logged_in(blueprint, token):
+    if not token:
+        flash("Failed to log in with Google.", category="error")
+        return False
+
+    resp = blueprint.session.get("/oauth2/v1/userinfo")
+    if not resp.ok:
+        msg = "Failed to fetch user info from Google."
+        flash(msg, category="error")
+        return False
+
+    google_info = resp.json()
+    google_user_id = str(google_info["id"])
+
+    # Find this OAuth token in the database, or create it
+    query = OAuth.query.filter_by(
+        provider=blueprint.name,
+        provider_user_id=google_user_id,
+    )
+    try:
+        oauth = query.one()
+    except NoResultFound:
+        oauth = OAuth(
+            provider=blueprint.name,
+            provider_user_id=google_user_id,
+            user=User(username=google_info["email"]),
+        )
+
+    if oauth.user:
+        login_user(oauth.user)
+        flash("Successfully signed in with Google.")
+    else:
+        login_user(oauth.user)
+        flash("Successfully signed in with Google.")
+
+    return False
+
+@app.route("/login/google")
+def login_google():
+    if not google.authorized:
+        return redirect(url_for("google.login"))
+    resp = google.get("/oauth2/v1/userinfo")
+    assert resp.ok, resp.text
+    return "You are {email} on Google".format(email=resp.json()["email"])
 
 class RegisterForm(FlaskForm):
     username = StringField(validators=[
@@ -536,7 +603,7 @@ def get_last_trading_day_performance(ticker):
 
 @app.route('/today')
 @login_required
-@cache.memoize(timeout=900)
+# @cache.memoize(timeout=900)
 def today():
     # Get user's stocks
     stock_data = Stock.query.filter_by(user_id=current_user.id).all()
