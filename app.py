@@ -285,7 +285,8 @@ def google_logged_in(blueprint, token):
         login_user(oauth.user)
         flash("Successfully signed in with Google.")
 
-    return False
+    # Add this line to redirect to the dashboard
+    return redirect(url_for('dashboard'))
 
 @app.route("/login/google")
 def login_google():
