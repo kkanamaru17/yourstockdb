@@ -52,10 +52,20 @@ google_bp = make_google_blueprint(
 )
 app.register_blueprint(google_bp, url_prefix="/login")
 
+import logging
+
 @login_manager.user_loader
 def load_user(user_id):
+    logging.info(f"Attempting to load user with id: {user_id}")
     if user_id is not None:
-        return User.query.get(int(user_id))
+        try:
+            user = User.query.get(int(user_id))
+            logging.info(f"Loaded user: {user}")
+            return user
+        except ValueError:
+            logging.warning(f"Invalid user_id: {user_id}")
+            return None
+    logging.warning("user_id is None")
     return None
 
 # Helper functions
@@ -264,29 +274,34 @@ def google_logged_in(blueprint, token):
     google_info = resp.json()
     google_user_id = str(google_info["id"])
 
-    # Find this OAuth token in the database, or create it
-    query = OAuth.query.filter_by(
+    oauth = OAuth.query.filter_by(
         provider=blueprint.name,
-        provider_user_id=google_user_id,
-    )
-    try:
-        oauth = query.one()
-    except NoResultFound:
+        provider_user_id=google_user_id
+    ).first()
+
+    if oauth is None:
+        user = User(
+            username=google_info["email"],
+            email=google_info["email"]
+        )
+        db.session.add(user)
+        db.session.flush()  # This assigns an id to the user
+
         oauth = OAuth(
             provider=blueprint.name,
             provider_user_id=google_user_id,
-            user=User(username=google_info["email"]),
+            user_id=user.id
         )
-
-    if oauth.user:
-        login_user(oauth.user)
-        flash("Successfully signed in with Google.")
+        db.session.add(oauth)
+        db.session.commit()
     else:
-        login_user(oauth.user)
-        flash("Successfully signed in with Google.")
+        user = oauth.user
 
-    # Add this line to redirect to the dashboard
-    return redirect(url_for('dashboard'))
+    login_user(user)
+    logging.info(f"Logged in user: {user.id}")
+    flash("Successfully signed in with Google.")
+
+    return False  # Disable Flask-Dance's default behavior
 
 @app.route("/login/google")
 def login_google():
