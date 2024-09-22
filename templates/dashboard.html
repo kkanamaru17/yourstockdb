@@ -17,10 +17,11 @@
         <h1>Welcome, {{ current_user.username }}!</h1>
         <h1>Stock DB</h1>
         <a href="{{ url_for('logout') }}">Logout</a><br>
-        <a href="{{ url_for('stockan') }}">Stock Analysis</a><span>: to see info on a stock click here</span><br><br>
+        <a href="{{ url_for('stockan') }}">Stock Analysis</a><span>: to see info on a stock click here</span><br>
+        <a href="{{ url_for('today') }}">Today's Digest</a><br><br>
         <form action="{{ url_for('dashboard') }}" method="post">
             <label for="ticker">Stock Ticker:</label>            
-            <input type="text" id="ticker" name="ticker" required>
+            <input type="text" id="ticker" name="ticker" required placeholder="JPN stock: 'XXXX.T' eg '7203.T' for Toyota">
             
             <label for="purchase_price">Purchase Price:</label>
             <input type="number" id="purchase_price" name="purchase_price" step="0.01" required>
@@ -86,6 +87,7 @@
                     <p>Capital Gain: {{ stock.return_performance|round(2) }}%</p>
                     <p>Income Gain: {{ stock.income_gain_pct|round(2) }}%</p>
                     <p>Dividend Yield: {{ stock.div_yield|round(2) }}%</p>
+                    <a href="{{ url_for('edit_stock', stock_id=stock.id) }}" class="edit-btn">Edit</a>
                     <form action="/delete" method="post">
                         <input type="hidden" name="ticker" value="{{ stock.ticker }}">
                         <button type="submit" class="delete-btn">Delete</button>
@@ -94,10 +96,15 @@
                 {% endfor %}
             </div>
         </div>
-        <a href="{{ url_for('download_csv') }}" class="btn btn-primary">Download Stock Database (CSV)</a>
+
+        <div class="download-csv-container">
+            <a href="{{ url_for('download_csv') }}" class="btn-google">
+                Download CSV
+            </a>
+        </div>
+
         <h2>Portfolio Return: {{ portfolio_return|round(2) }}%</h2>
         <h3>with dividend: {{ portfolio_return_withincome|round(2) }}%</h3>
-        <a href="{{ url_for('today') }}">Today's Digest</a>
 
         <h3>Portfolio Summary:</h3>
         <ul>

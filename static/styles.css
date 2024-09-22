@@ -158,10 +158,9 @@ tbody tr:hover {
     bottom: 0px;
     right: 10px;
     width: 200px; /* Adjust the size as needed */u
-    height: 200px;
+    height: auto;
     z-index: 100; /* Ensure it appears on top of other elements */
 }
-
 
 /* Add this to enable scrolling */
 html, body {
@@ -319,26 +318,52 @@ textarea {
     }
 }
 
-.btn-primary {
-    background-color: #007bff;
-    color: white;
-    padding: 10px 15px;
-    text-decoration: none;
-    border-radius: 5px;
+.btn {
     display: inline-block;
-    margin-top: 20px;
+    width: auto;
+    padding: 10px 20px;
+    background-color: #000000;
+    border: none;
+    color: #ffffff;
+    font-size: 16px;
+    border-radius: 0;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+    text-align: center;
+}
+
+.btn:hover {
+    background-color: #333333;
+}
+
+/* If you want to keep the primary button style separate, you can keep this */
+.btn-primary {
+    background-color: #000000;
+    color: #ffffff;
 }
 
 .btn-primary:hover {
-    background-color: #0056b3;
+    background-color: #333333;
 }
 
-.form-input {
-    width: 100%;
-    /* max-width: 300px; Adjust this value to match your dashboard text boxes */
-    padding: 10px;
+/* Additional styling for the login form */
+.container form {
+    margin-bottom: 20px;
+}
+
+.container form .btn {
+    margin-top: 10px;
+}
+
+.container h2 {
+    margin-top: 20px;
     margin-bottom: 10px;
-    box-sizing: border-box;
+}
+
+.container .btn {
+    margin-top: 10px;
+    display: inline-block;
 }
 
 .portfolio-performance {
@@ -436,4 +461,97 @@ textarea {
     background-color: #e9ecef;
     color: #000;
     text-decoration: none;
+}
+
+.login-container {
+    max-width: 400px;
+    margin: 50px auto;
+}
+
+.login-container form {
+    display: flex;
+    flex-direction: column;
+}
+
+.login-container .form-input {
+    margin-bottom: 15px;
+}
+
+.login-container .btn-primary {
+    align-self: flex-start;
+    margin-bottom: 20px;
+}
+
+.login-container h2 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.form-input {
+    width: 100%;
+    height: 40px; /* Set a specific height */
+    padding: 8px 12px; /* Adjust padding as needed */
+    margin-bottom: 15px;
+    border: 1px solid #000000;
+    border-radius: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    background-color: #ffffff;
+    color: #000000;
+}
+
+/* Ensure password field matches username field */
+input[type="password"].form-input {
+    font: small-caption;
+    font-size: 16px;
+    letter-spacing: 0.1em;
+}
+
+/* Style for when the inputs are focused */
+.form-input:focus {
+    outline: none;
+    border-color: #000000;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+}
+
+.btn-google {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: transparent;
+    border: 1px solid #000000;
+    color: #000000;
+    font-size: 16px;
+    font-family: 'Inter', sans-serif;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    text-decoration: none;
+    text-align: center;
+}
+
+.btn-google:hover {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+.google-icon {
+    width: 18px;  /* Adjust size as needed */
+    height: 18px;  /* Adjust size as needed */
+    margin-right: 10px;  /* Space between icon and text */
+}
+
+.btn-google:hover .google-icon {
+    filter: brightness(0) invert(1);  /* Make the icon white on hover */
+}
+
+.download-csv-container {
+    margin-top: 20px;  /* Adjust this value as needed */
+}
+
+::placeholder {
+    font-size: 0.8em;
+    font-style: italic;
+    color: #999;
 }

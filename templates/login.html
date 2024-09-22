@@ -5,23 +5,37 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <title>Login</title>
 </head>
 
 <body>
-    <h1>Login Page</h1>
+    <div class="container">
+        <h1>Login</h1>
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <div>
+                <label for="{{ form.username.id }}">Username</label>
+                {{ form.username(class="form-input") }}
+            </div>
+            <div>
+                <label for="{{ form.password.id }}">Password</label>
+                {{ form.password(class="form-input") }}
+            </div>
+            {{ form.submit(class="btn") }}
+        </form>
 
-    <form method="POST" action="">
-        {{ form.hidden_tag() }}
-        {{ form.username }}
-        {{ form.password }}
-        {{ form.submit }}
-    </form>
+        <p>
+            <a href="{{ url_for('register') }}">Don't have an account? Sign Up</a>
+        </p>
 
-    <a href="{{ url_for('register') }}">Don't have an account? Sign Up</a>
-
-    <h2>Or</h2>
-    <a href="{{ url_for('google.login') }}" class="btn btn-primary">Log in with Google</a>
+        <h3>Or</h3>
+        <a href="{{ url_for('google.login') }}" class="btn-google">
+            <img src="{{ url_for('static', filename='images/googlelogo.png') }}" alt="Google logo" class="google-icon">
+            Continue with Google
+        </a>
+    </div>
 </body>
 
 </html>
