@@ -320,7 +320,8 @@ def google_logged_in(blueprint, token):
     login_user(user)
     flash("Successfully signed in with Google.")
 
-    return False  # Disable Flask-Dance's default behavior
+    # Redirect to dashboard
+    return redirect(url_for('dashboard'))
 
 @app.route("/login/google")
 def login_google():
