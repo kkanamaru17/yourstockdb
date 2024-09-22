@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import InputRequired, Length, ValidationError
+from wtforms.validators import InputRequired, Length, ValidationError, Email, Optional
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from config import Config
@@ -228,7 +228,11 @@ def calculate_income_gain_pct(ticker, purchase_date, purchase_price):
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), nullable=False, unique=True)
+    email = db.Column(db.String(120), unique=True, nullable=True)  # Add this line
     password = db.Column(db.String(128), nullable=False)
+    
+    def get_id(self):
+        return str(self.id)
 
 class Stock(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -280,12 +284,28 @@ def google_logged_in(blueprint, token):
     ).first()
 
     if oauth is None:
-        user = User(
-            username=google_info["email"],
-            email=google_info["email"]
-        )
-        db.session.add(user)
-        db.session.flush()  # This assigns an id to the user
+        # Check if a user with this email already exists
+        existing_user = User.query.filter_by(email=google_info["email"]).first()
+        if existing_user:
+            user = existing_user
+        else:
+            # Create a new user
+            username = google_info["email"].split('@')[0]
+            # Ensure username is unique
+            base_username = username
+            counter = 1
+            while User.query.filter_by(username=username).first():
+                username = f"{base_username}{counter}"
+                counter += 1
+            
+            hashed_password = bcrypt.generate_password_hash('temporary_password').decode('utf-8')
+            user = User(
+                username=username,
+                email=google_info["email"],
+                password=hashed_password
+            )
+            db.session.add(user)
+            db.session.flush()  # This assigns an id to the user
 
         oauth = OAuth(
             provider=blueprint.name,
@@ -298,7 +318,6 @@ def google_logged_in(blueprint, token):
         user = oauth.user
 
     login_user(user)
-    logging.info(f"Logged in user: {user.id}")
     flash("Successfully signed in with Google.")
 
     return False  # Disable Flask-Dance's default behavior
@@ -314,10 +333,9 @@ def login_google():
 class RegisterForm(FlaskForm):
     username = StringField(validators=[
                            InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Username"})
-
+    email = StringField('Email', validators=[Optional(), Email()], render_kw={"placeholder": "Email (optional)"})
     password = PasswordField(validators=[
                              InputRequired(), Length(min=8, max=20)], render_kw={"placeholder": "Password"})
-
     submit = SubmitField('Register')
 
     def validate_username(self, username):
@@ -326,6 +344,12 @@ class RegisterForm(FlaskForm):
         if existing_user_username:
             raise ValidationError(
                 'That username already exists. Please choose a different one.')
+
+    def validate_email(self, email):
+        if email.data:
+            existing_user_email = User.query.filter_by(email=email.data).first()
+            if existing_user_email:
+                raise ValidationError('That email is already registered. Please use a different one.')
 
 
 class LoginForm(FlaskForm):
@@ -347,7 +371,8 @@ def home():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
+        user = User.query.filter((User.username == form.username.data) | 
+                                 (User.email == form.username.data)).first()
         if user:
             if bcrypt.check_password_hash(user.password, form.password.data):
                 login_user(user)
@@ -368,6 +393,8 @@ def register():
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         new_user = User(username=form.username.data, password=hashed_password)
+        if form.email.data:
+            new_user.email = form.email.data
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('login'))
