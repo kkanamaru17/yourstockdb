@@ -157,7 +157,7 @@ tbody tr:hover {
     position: fixed;
     bottom: 0px;
     right: 10px;
-    width: 200px; /* Adjust the size as needed */u
+    width: 100px; /* Adjust the size as needed */u
     height: auto;
     z-index: 100; /* Ensure it appears on top of other elements */
 }

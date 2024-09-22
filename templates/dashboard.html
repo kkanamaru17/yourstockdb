@@ -17,7 +17,7 @@
         <h1>Welcome, {{ current_user.username }}!</h1>
         <h1>Stock DB</h1>
         <a href="{{ url_for('logout') }}">Logout</a><br>
-        <a href="{{ url_for('stockan') }}">Stock Analysis</a><span>: to see info on a stock click here</span><br>
+        <a href="{{ url_for('stockan') }}">Stock Analysis</a><span>: to see info on a stock</span><br>
         <a href="{{ url_for('today') }}">Today's Digest</a><br><br>
         <form action="{{ url_for('dashboard') }}" method="post">
             <label for="ticker">Stock Ticker:</label>            
@@ -87,6 +87,7 @@
                     <p>Capital Gain: {{ stock.return_performance|round(2) }}%</p>
                     <p>Income Gain: {{ stock.income_gain_pct|round(2) }}%</p>
                     <p>Dividend Yield: {{ stock.div_yield|round(2) }}%</p>
+                    <p>Purchase Date: {{ stock.purchase_date.strftime('%Y-%m-%d') }}</p>
                     <a href="{{ url_for('edit_stock', stock_id=stock.id) }}" class="edit-btn">Edit</a>
                     <form action="/delete" method="post">
                         <input type="hidden" name="ticker" value="{{ stock.ticker }}">
