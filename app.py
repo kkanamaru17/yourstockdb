@@ -409,7 +409,7 @@ def dashboard():
         ticker = request.form['ticker']
         purchase_price = float(request.form['purchase_price'])
         shares = int(request.form['num_shares'])
-        purchase_date = datetime.strptime(request.form['purchase_date'], '%Y-%m-%d').date()  # Add this line
+        purchase_date = datetime.strptime(request.form['purchase_date'], '%Y-%m-%d').date()
 
         latest_price = fetch_latest_price(ticker)
         return_performance = calculate_returns(purchase_price, latest_price)
@@ -426,6 +426,11 @@ def dashboard():
             total_investment = (stock.purchase_price * stock.shares) + (purchase_price * shares)
             total_shares = stock.shares + shares
             new_average_purchase_price = total_investment / total_shares
+            
+            # Calculate weighted average purchase date
+            existing_weighted_date = (stock.purchase_date.toordinal() * stock.shares) + (purchase_date.toordinal() * shares)
+            weighted_average_date = date.fromordinal(existing_weighted_date // total_shares)
+            
             stock.purchase_price = new_average_purchase_price
             stock.shares = total_shares
             stock.latest_price = latest_price
@@ -434,7 +439,7 @@ def dashboard():
             stock.forward_pe = forward_pe
             stock.div_yield = div_yield
             stock.company_name = company_name  # Update company name
-            stock.purchase_date = purchase_date  # Add this line
+            stock.purchase_date = weighted_average_date  # Update to weighted average date
 
         else:
             # Create a new stock entry
@@ -669,6 +674,7 @@ def today():
 
     # Get Nikkei 225 performance
     nikkei_performance, nikkei_date = get_last_trading_day_performance('^N225')
+    sp_performance, sp_date = get_last_trading_day_performance('^GSPC')
 
     # Calculate individual stock performances
     stock_performances = []
@@ -679,16 +685,15 @@ def today():
     # Sort performances from best to worst
     stock_performances.sort(key=lambda x: x[1], reverse=True)
 
-    # Create horizontal bar chart
+    # Create horizontal bar chart for stock performances
     fig, ax = plt.subplots(figsize=(8, max(4, len(stock_performances) * 0.4)))
     company_names, performances = zip(*stock_performances)
-    
+
     # Truncate long company names
     max_name_length = 20
     truncated_names = [name[:max_name_length] + '...' if len(name) > max_name_length else name for name in company_names]
-    
+
     y_pos = range(len(company_names))
-    
     bars = ax.barh(y_pos, performances, align='center', color='white', edgecolor='black')
     ax.set_yticks(y_pos)
     ax.set_yticklabels(truncated_names)
@@ -714,18 +719,68 @@ def today():
     # Adjust layout to prevent cutoff
     plt.tight_layout()
 
-    # Save plot to a base64 string
+    # Save plot to a base64 string for stock performance
     buffer = io.BytesIO()
     plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
     buffer.seek(0)
-    plot_data = base64.b64encode(buffer.getvalue()).decode()
+    performance_chart = base64.b64encode(buffer.getvalue()).decode()
+    plt.close(fig)
+
+    # Create horizontal bar chart for portfolio performance
+    portfolio_performance_data = []
+    for stock in stock_data:
+        portfolio_performance_data.append((stock.company_name, stock.return_performance))  # Assuming return_performance is calculated
+
+    # Sort portfolio performance data from highest to lowest
+    portfolio_performance_data.sort(key=lambda x: x[1], reverse=True)
+
+    # Create the portfolio performance chart
+    fig, ax = plt.subplots(figsize=(8, max(4, len(portfolio_performance_data) * 0.4)))
+    portfolio_company_names, portfolio_performances = zip(*portfolio_performance_data)
+
+    # Truncate long company names
+    portfolio_truncated_names = [name[:max_name_length] + '...' if len(name) > max_name_length else name for name in portfolio_company_names]
+
+    y_pos = range(len(portfolio_company_names))
+    portfolio_bars = ax.barh(y_pos, portfolio_performances, align='center', color='white', edgecolor='black')
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(portfolio_truncated_names)
+    ax.invert_yaxis()  # Labels read top-to-bottom
+    ax.set_xlabel('Performance (%)')
+    ax.set_title("Portfolio Performance")
+
+    # Add performance labels to the end of each bar
+    for i, bar in enumerate(portfolio_bars):
+        width = bar.get_width()
+        ax.text(width + gap, bar.get_y() + bar.get_height()/2, f'{portfolio_performances[i]:.2f}%', 
+                ha='left', va='center', color='black', fontsize=12)
+
+    # Remove top and right spines
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    # Set background color to white
+    ax.set_facecolor('white')
+    fig.patch.set_facecolor('white')
+
+    # Adjust layout to prevent cutoff
+    plt.tight_layout()
+
+    # Save plot to a base64 string for portfolio performance
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+    buffer.seek(0)
+    portfolio_performance_chart = base64.b64encode(buffer.getvalue()).decode()
     plt.close(fig)
 
     return render_template('today.html',
                            portfolio_performance=portfolio_performance,
                            nikkei_performance=nikkei_performance,
                            nikkei_date=nikkei_date,
-                           performance_chart=plot_data)
+                           sp_performance=sp_performance,
+                           sp_date=sp_date,
+                           performance_chart=performance_chart,
+                           portfolio_performance_chart=portfolio_performance_chart)  # Pass the new chart data
 
 # Update the route for saving the memo
 @app.route('/save_memo', methods=['POST'])

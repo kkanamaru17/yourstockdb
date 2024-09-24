@@ -27,12 +27,24 @@
                 </span>
                 {% if nikkei_date %}<span class="date-info">(as of {{ nikkei_date }})</span>{% endif %}
             </h3>
+            <h3>S&P 500: 
+                <span class="{{ 'positive-performance' if sp_performance and sp_performance >= 0 else 'negative-performance' }}">
+                    {{ '{:+.2f}%'.format(sp_performance|default(0)) }}
+                </span>
+                {% if sp_date %}<span class="date-info">(as of {{ sp_date }})</span>{% endif %}
+            </h3>
         </div>
         
         <h2>Stock Performances</h2>
         <div class="performance-chart">
             <img src="data:image/png;base64,{{ performance_chart }}" alt="Stock Performances">
         </div>
-        <img src="static/images/agent2.png" alt="Dog" class="agent-image">
+
+        <h2>Portfolio Performance</h2>
+        <div class="portfolio-performance-chart">
+            <img src="data:image/png;base64,{{ portfolio_performance_chart }}" alt="Portfolio Performance">
+        </div>
+
+        <img src="static/images/agent2.png" alt="agent" class="agent-image">
     </div>
 </body>
