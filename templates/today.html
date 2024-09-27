@@ -9,11 +9,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="static/styles.css">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+    </style>
 </head>
 
 <body>
+    <div id="confetti-canvas"></div>
     <div class="container">
         <h1>Today's Digest</h1>
+        <a href="{{ url_for('portfolio') }}">Portfolio</a><br>
         <a href="{{ url_for('dashboard') }}">Back to Stock DB</a><br><br>
         <div class="todays-digest">
             <h3>Portfolio: 
@@ -40,11 +54,41 @@
             <img src="data:image/png;base64,{{ performance_chart }}" alt="Stock Performances">
         </div>
 
-        <h2>Portfolio Performance</h2>
-        <div class="performance-chart">
-            <img src="data:image/png;base64,{{ portfolio_performance_chart }}" alt="Portfolio Performance">
-        </div>
-
         <img src="static/images/agent2.png" alt="agent" class="agent-image">
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var portfolioPerformance = {{ portfolio_performance|default(0) }};
+            var nikkeiPerformance = {{ nikkei_performance|default(0) }};
+
+            if (portfolioPerformance > nikkeiPerformance) {
+                var duration = 1 * 1000;
+                var end = Date.now() + duration;
+
+                (function frame() {
+                    confetti({
+                        particleCount: 7,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 },
+                        colors: ['#FFB3BA', '#BAFFC9', '#BAE1FF', '#FFFFBA']  // Pastel pink, green, blue, yellow
+                    });
+                    confetti({
+                        particleCount: 7,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 },
+                        colors: ['#FFB3BA', '#BAFFC9', '#BAE1FF', '#FFFFBA']  // Pastel pink, green, blue, yellow
+                    });
+
+                    if (Date.now() < end) {
+                        requestAnimationFrame(frame);
+                    }
+                }());
+            }
+        });
+    </script>
 </body>
+
+</html>

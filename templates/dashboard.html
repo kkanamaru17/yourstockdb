@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-//test updated on macbook pro
 
 <head>
     <meta charset="UTF-8">
@@ -19,7 +18,10 @@
         <h1>Stock DB</h1>
         <a href="{{ url_for('logout') }}">Logout</a><br>
         <a href="{{ url_for('stockan') }}">Stock Analysis</a><span>: to see info on a stock</span><br>
-        <a href="{{ url_for('today') }}">Today's Digest</a><br><br>
+        <a href="{{ url_for('portfolio') }}">Portfolio</a><br>
+        <a href="{{ url_for('today') }}">Today's Digest</a><br>
+        <h2>Portfolio Return: {{ portfolio_return|round(2) }}%</h2>
+        <h3>with dividend: {{ portfolio_return_withincome|round(2) }}%</h3>
         <form action="{{ url_for('dashboard') }}" method="post">
             <label for="ticker">Stock Ticker:</label>            
             <input type="text" id="ticker" name="ticker" required placeholder="JPN stock: 'XXXX.T' eg '7203.T' for Toyota">
@@ -104,33 +106,7 @@
                 Download CSV
             </a>
         </div>
-
-        <h2>Portfolio Return: {{ portfolio_return|round(2) }}%</h2>
-        <h3>with dividend: {{ portfolio_return_withincome|round(2) }}%</h3>
-
-        <h3>Portfolio Summary:</h3>
-        <ul>
-            <li>Total Value: {{ '{:,}'.format(total_value|round(0)|int) }}</li>
-            <li>Total Income Gain: {{ '{:,}'.format(total_income_gain|round(0)|int) }}</li>
-            <li>Return: {{ '{:,}'.format(return_value|round(0)|int) }}</li>
-            <li>Dividend: {{ '{:,}'.format(dividend_value|round(0)|int) }}</li>
-            <li>Number of Stocks: {{ num_stocks }}</li>
-            <li>Win Rate: {{ win_rate|round(2) }}%</li>
-            <li>Average Days Held: {{ avg_days_held|round(0)|int }}</li>
-            {% if longest_held_stock %}
-            <li>Longest Held: {{ longest_held_stock.company_name }} ({{ longest_held_days }} days)</li>
-            {% endif %}
-            {% if shortest_held_stock %}
-            <li>Shortest Held: {{ shortest_held_stock.company_name }} ({{ shortest_held_days }} days)</li>
-            {% endif %}
-        </ul>
-        <!-- Add the performance chart section here -->
-        <!-- <section class="portfolio-performance">
-            <h3>Portfolio Performance</h3>
-            <img src="data:image/png;base64,{{ performance_chart }}" alt="Portfolio Performance Chart">
-        </section> -->
-
-    </div> <!-- Close the main container div if you have one -->
+    </div>
 
     <footer class="footer">
         <div class="footer-content">

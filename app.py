@@ -483,14 +483,13 @@ def dashboard():
     portfolio_return_withincome = portfolio_return + total_income_gain_pct
     
     # Calculate new metrics
-    total_value = sum(stock.latest_price * stock.shares for stock in stock_data)
-    total_cost = sum(stock.purchase_price * stock.shares for stock in stock_data)
-    total_income_gain = total_cost * total_income_gain_pct/100
-    return_value = total_value - total_cost
-    dividend_value = sum((stock.div_yield / 100) * stock.latest_price * stock.shares for stock in stock_data)
-    num_stocks = len(stock_data)
-    winning_stocks = sum(1 for stock in stock_data if stock.return_performance > 0)
-    win_rate = (winning_stocks / num_stocks) * 100 if num_stocks > 0 else 0
+    # total_value = sum(stock.latest_price * stock.shares for stock in stock_data)
+    # total_income_gain = total_cost * total_income_gain_pct/100
+    # return_value = total_value - total_cost
+    # dividend_value = sum((stock.div_yield / 100) * stock.latest_price * stock.shares for stock in stock_data)
+    # num_stocks = len(stock_data)
+    # winning_stocks = sum(1 for stock in stock_data if stock.return_performance > 0)
+    # win_rate = (winning_stocks / num_stocks) * 100 if num_stocks > 0 else 0
 
     # if stock_data:
     #     portfolio_metrics = calculate_portfolio_metrics(stock_data)
@@ -501,20 +500,20 @@ def dashboard():
     #     beta = alpha = sharpe_ratio = 0
 
     # Calculate new metrics
-    today = date.today()
-    holding_periods = [(stock, (today - stock.purchase_date).days) for stock in stock_data]
+    # today = date.today()
+    # holding_periods = [(stock, (today - stock.purchase_date).days) for stock in stock_data]
     
-    if holding_periods:
-        avg_days_held = sum(days for _, days in holding_periods) / len(holding_periods)
+    # if holding_periods:
+    #     avg_days_held = sum(days for _, days in holding_periods) / len(holding_periods)
         
-        longest_held = max(holding_periods, key=lambda x: x[1])
-        longest_held_stock, longest_held_days = longest_held
+    #     longest_held = max(holding_periods, key=lambda x: x[1])
+    #     longest_held_stock, longest_held_days = longest_held
         
-        shortest_held = min(holding_periods, key=lambda x: x[1])
-        shortest_held_stock, shortest_held_days = shortest_held
-    else:
-        avg_days_held = longest_held_days = shortest_held_days = 0
-        longest_held_stock = shortest_held_stock = None
+    #     shortest_held = min(holding_periods, key=lambda x: x[1])
+    #     shortest_held_stock, shortest_held_days = shortest_held
+    # else:
+    #     avg_days_held = longest_held_days = shortest_held_days = 0
+    #     longest_held_stock = shortest_held_stock = None
 
     # # Prepare data for the chart
     # fig, ax = plt.subplots(figsize=(12, 8))  # Increased figure size
@@ -550,8 +549,8 @@ def dashboard():
     # plt.close(fig)  # Close the figure to free up memory
 
     # Calculate Today's Digest
-    end_date = datetime.now().replace(tzinfo=None)  # Use naive datetime
-    start_date = end_date - timedelta(days=5)  # Fetch 5 days to ensure we get the last trading day
+    # end_date = datetime.now().replace(tzinfo=None)  # Use naive datetime
+    # start_date = end_date - timedelta(days=5)  # Fetch 5 days to ensure we get the last trading day
 
     # Function to get the last trading day's performance
     # def get_last_trading_day_performance(ticker):
@@ -577,31 +576,158 @@ def dashboard():
     # nikkei_performance = get_last_trading_day_performance('^N225')
 
     # Calculate total income gain percentage (weighted average)
-    total_income_gain_pct = sum(stock.income_gain_pct * (stock.purchase_price * stock.shares) / total_cost for stock in stock_data) if total_cost > 0 else 0
+    # total_income_gain_pct = sum(stock.income_gain_pct * (stock.purchase_price * stock.shares) / total_cost for stock in stock_data) if total_cost > 0 else 0
 
     return render_template('dashboard.html', 
                            stocks=stock_data, 
                            portfolio_return=portfolio_return, 
                            portfolio_return_withdiv=portfolio_return_withdiv,
-                           total_value=total_value,
-                           return_value=return_value,
-                           dividend_value=dividend_value,
-                           num_stocks=num_stocks,
-                           win_rate=win_rate,
+                        #    total_value=total_value,
+                        #    return_value=return_value,
+                        #    dividend_value=dividend_value,
+                        #    num_stocks=num_stocks,
+                        #    win_rate=win_rate,
                         #    beta=beta,
                         #    alpha=alpha,
                         #    sharpe_ratio=sharpe_ratio,
-                           avg_days_held=avg_days_held,
-                           longest_held_stock=longest_held_stock,
-                           longest_held_days=longest_held_days,
-                           shortest_held_stock=shortest_held_stock,
-                           shortest_held_days=shortest_held_days,
+                        #    avg_days_held=avg_days_held,
+                        #    longest_held_stock=longest_held_stock,
+                        #    longest_held_days=longest_held_days,
+                        #    shortest_held_stock=shortest_held_stock,
+                        #    shortest_held_days=shortest_held_days,
                         #    performance_chart=plot_url,
                         #    portfolio_performance=portfolio_performance,
                         #    nikkei_performance=nikkei_performance,
                         #    total_income_gain_pct=total_income_gain_pct,
-                           portfolio_return_withincome=portfolio_return_withincome,
-                           total_income_gain=total_income_gain)
+                           portfolio_return_withincome=portfolio_return_withincome)
+                        #    total_income_gain=total_income_gain)
+
+@app.route('/portfolio', methods=['GET', 'POST'])
+def portfolio():
+        stock_data = Stock.query.filter_by(user_id=current_user.id).all()
+
+        # Update latest prices and recalculate return for each stock
+        for stock in stock_data:
+            stock.latest_price = fetch_latest_price(stock.ticker)
+            stock.daily_return = fetch_daily_return(stock.ticker)
+            stock.return_performance = calculate_returns(stock.purchase_price, stock.latest_price)
+            
+            # Calculate income gain percentage and convert to Python float
+            income_gain_pct = calculate_income_gain_pct(stock.ticker, stock.purchase_date, stock.purchase_price)
+            stock.income_gain_pct = float(income_gain_pct)  # Convert np.float64 to Python float
+
+        db.session.commit()
+
+        portfolio_return = calculate_portfolio_return(stock_data) if stock_data else 0
+        portfolio_return_withdiv = calculate_portfolio_return_withdiv(stock_data) if stock_data else 0
+        total_cost = sum(stock.purchase_price * stock.shares for stock in stock_data)
+        total_income_gain_pct = sum(stock.income_gain_pct * (stock.purchase_price * stock.shares) / total_cost for stock in stock_data) if total_cost > 0 else 0
+        portfolio_return_withincome = portfolio_return + total_income_gain_pct
+        
+        # Calculate new metrics
+        total_value = sum(stock.latest_price * stock.shares for stock in stock_data)
+        total_cost = sum(stock.purchase_price * stock.shares for stock in stock_data)
+        total_income_gain = total_cost * total_income_gain_pct/100
+        return_value = total_value - total_cost
+        dividend_value = sum((stock.div_yield / 100) * stock.latest_price * stock.shares for stock in stock_data)
+        num_stocks = len(stock_data)
+        winning_stocks = sum(1 for stock in stock_data if stock.return_performance > 0)
+        win_rate = (winning_stocks / num_stocks) * 100 if num_stocks > 0 else 0
+
+        # Calculate new metrics
+        today = date.today()
+        holding_periods = [(stock, (today - stock.purchase_date).days) for stock in stock_data]
+        
+        if holding_periods:
+            avg_days_held = sum(days for _, days in holding_periods) / len(holding_periods)
+            
+            longest_held = max(holding_periods, key=lambda x: x[1])
+            longest_held_stock, longest_held_days = longest_held
+            
+            shortest_held = min(holding_periods, key=lambda x: x[1])
+            shortest_held_stock, shortest_held_days = shortest_held
+        else:
+            avg_days_held = longest_held_days = shortest_held_days = 0
+            longest_held_stock = shortest_held_stock = None
+
+        # Calculate Today's Digest
+        end_date = datetime.now().replace(tzinfo=None)  # Use naive datetime
+        start_date = end_date - timedelta(days=5)  # Fetch 5 days to ensure we get the last trading day
+
+        # Calculate total income gain percentage (weighted average)
+        total_income_gain_pct = sum(stock.income_gain_pct * (stock.purchase_price * stock.shares) / total_cost for stock in stock_data) if total_cost > 0 else 0
+
+        # Create horizontal bar chart for portfolio performance
+        portfolio_performance_data = []
+        for stock in stock_data:
+            portfolio_performance_data.append((stock.company_name, stock.return_performance))  # Assuming return_performance is calculated
+
+        # Sort portfolio performance data from highest to lowest
+        portfolio_performance_data.sort(key=lambda x: x[1], reverse=True)
+
+        # Create the portfolio performance chart
+        fig, ax = plt.subplots(figsize=(8, max(4, len(portfolio_performance_data) * 0.4)))
+        portfolio_company_names, portfolio_performances = zip(*portfolio_performance_data)
+
+        # Truncate long company names
+        max_name_length = 20
+        truncated_names = [name[:max_name_length] + '...' if len(name) > max_name_length else name for name in portfolio_company_names]
+
+        # Truncate long company names
+        portfolio_truncated_names = [name[:max_name_length] + '...' if len(name) > max_name_length else name for name in portfolio_company_names]
+
+        y_pos = range(len(portfolio_company_names))
+        portfolio_bars = ax.barh(y_pos, portfolio_performances, align='center', color='white', edgecolor='black')
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(portfolio_truncated_names)
+        ax.invert_yaxis()  # Labels read top-to-bottom
+        ax.set_xlabel('Performance (%)')
+        ax.set_title("Portfolio Performance")
+
+
+
+        # Add performance labels to the end of each bar
+        for i, bar in enumerate(portfolio_bars):
+            width = bar.get_width()
+            gap = 0.03
+            ax.text(width + gap, bar.get_y() + bar.get_height()/2, f'{portfolio_performances[i]:.2f}%', 
+                    ha='left', va='center', color='black', fontsize=12)
+
+        # Remove top and right spines
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+
+        # Set background color to white
+        ax.set_facecolor('white')
+        fig.patch.set_facecolor('white')
+
+        # Adjust layout to prevent cutoff
+        plt.tight_layout()
+
+        # Save plot to a base64 string for portfolio performance
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        portfolio_performance_chart = base64.b64encode(buffer.getvalue()).decode()
+        plt.close(fig)
+
+        return render_template('portfolio.html', 
+                            stocks=stock_data, 
+                            portfolio_return=portfolio_return, 
+                            portfolio_return_withdiv=portfolio_return_withdiv,
+                            total_value=total_value,
+                            return_value=return_value,
+                            dividend_value=dividend_value,
+                            num_stocks=num_stocks,
+                            win_rate=win_rate,
+                            avg_days_held=avg_days_held,
+                            longest_held_stock=longest_held_stock,
+                            longest_held_days=longest_held_days,
+                            shortest_held_stock=shortest_held_stock,
+                            shortest_held_days=shortest_held_days,
+                            portfolio_return_withincome=portfolio_return_withincome,
+                            total_income_gain=total_income_gain,
+                            portfolio_performance_chart=portfolio_performance_chart)
 
 @app.route('/delete', methods=['POST'])
 def delete():
@@ -726,61 +852,13 @@ def today():
     performance_chart = base64.b64encode(buffer.getvalue()).decode()
     plt.close(fig)
 
-    # Create horizontal bar chart for portfolio performance
-    portfolio_performance_data = []
-    for stock in stock_data:
-        portfolio_performance_data.append((stock.company_name, stock.return_performance))  # Assuming return_performance is calculated
-
-    # Sort portfolio performance data from highest to lowest
-    portfolio_performance_data.sort(key=lambda x: x[1], reverse=True)
-
-    # Create the portfolio performance chart
-    fig, ax = plt.subplots(figsize=(8, max(4, len(portfolio_performance_data) * 0.4)))
-    portfolio_company_names, portfolio_performances = zip(*portfolio_performance_data)
-
-    # Truncate long company names
-    portfolio_truncated_names = [name[:max_name_length] + '...' if len(name) > max_name_length else name for name in portfolio_company_names]
-
-    y_pos = range(len(portfolio_company_names))
-    portfolio_bars = ax.barh(y_pos, portfolio_performances, align='center', color='white', edgecolor='black')
-    ax.set_yticks(y_pos)
-    ax.set_yticklabels(portfolio_truncated_names)
-    ax.invert_yaxis()  # Labels read top-to-bottom
-    ax.set_xlabel('Performance (%)')
-    ax.set_title("Portfolio Performance")
-
-    # Add performance labels to the end of each bar
-    for i, bar in enumerate(portfolio_bars):
-        width = bar.get_width()
-        ax.text(width + gap, bar.get_y() + bar.get_height()/2, f'{portfolio_performances[i]:.2f}%', 
-                ha='left', va='center', color='black', fontsize=12)
-
-    # Remove top and right spines
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-
-    # Set background color to white
-    ax.set_facecolor('white')
-    fig.patch.set_facecolor('white')
-
-    # Adjust layout to prevent cutoff
-    plt.tight_layout()
-
-    # Save plot to a base64 string for portfolio performance
-    buffer = io.BytesIO()
-    plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
-    buffer.seek(0)
-    portfolio_performance_chart = base64.b64encode(buffer.getvalue()).decode()
-    plt.close(fig)
-
     return render_template('today.html',
                            portfolio_performance=portfolio_performance,
                            nikkei_performance=nikkei_performance,
                            nikkei_date=nikkei_date,
                            sp_performance=sp_performance,
                            sp_date=sp_date,
-                           performance_chart=performance_chart,
-                           portfolio_performance_chart=portfolio_performance_chart)  # Pass the new chart data
+                           performance_chart=performance_chart)  # Pass the new chart data
 
 # Update the route for saving the memo
 @app.route('/save_memo', methods=['POST'])

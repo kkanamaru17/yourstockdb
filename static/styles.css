@@ -406,6 +406,22 @@ textarea {
     color: #dc3545;
 }
 
+.positive-return {
+    color: #28a745;
+}
+
+.negative-return {
+    color: #dc3545;
+}
+
+.positive-return_withincome {
+    color: #28a745;
+}
+
+.negative-return_withincome {
+    color: #dc3545;
+}
+
 .performance-chart {
     margin-top: 20px;
     text-align: center;

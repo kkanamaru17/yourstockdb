@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Portfolio</h1>
+        <a href="{{ url_for('logout') }}">Logout</a><br>
+        <a href="{{ url_for('stockan') }}">Stock Analysis</a><span>: to see info on a stock</span><br>
+        <a href="{{ url_for('dashboard') }}">Back to Stock DB</a><br>
+        <a href="{{ url_for('today') }}">Today's Digest</a><br><br>
+
+        <div class="todays-digest">
+            <h3>Portfolio: 
+                <span class="{{ 'positive-return' if portfolio_return and portfolio_return >= 0 else 'negative-return' }}">
+                    {{ '{:+.2f}%'.format(portfolio_return|default(0)) }}
+                </span>
+            </h3>
+            <h3>with Dividend: 
+                <span class="{{ 'positive-return_withincome' if portfolio_return_withincome and portfolio_return_withincome >= 0 else 'negative-return_withincome' }}">
+                    {{ '{:+.2f}%'.format(portfolio_return_withincome|default(0)) }}
+                </span>
+            </h3>
+        </div>
+
+        <h3>Portfolio Summary:</h3>
+        <ul>
+            <li>Total Value: {{ '{:,}'.format(total_value|round(0)|int) }}</li>
+            <li>Total Income Gain: {{ '{:,}'.format(total_income_gain|round(0)|int) }}</li>
+            <li>Return: {{ '{:,}'.format(return_value|round(0)|int) }}</li>
+            <!-- <li>Dividend: {{ '{:,}'.format(dividend_value|round(0)|int) }}</li> -->
+            <li>Number of Stocks: {{ num_stocks }}</li>
+            <li>Win Rate: {{ win_rate|round(2) }}%</li>
+            <li>Average Days Held: {{ avg_days_held|round(0)|int }}</li>
+            {% if longest_held_stock %}
+            <li>Longest Held: {{ longest_held_stock.company_name }} ({{ longest_held_days }} days)</li>
+            {% endif %}
+            {% if shortest_held_stock %}
+            <li>Shortest Held: {{ shortest_held_stock.company_name }} ({{ shortest_held_days }} days)</li>
+            {% endif %}
+        </ul>
+
+        <h3>Portfolio Performance</h3>
+        <div class="performance-chart">
+            <img src="data:image/png;base64,{{ portfolio_performance_chart }}" alt="Portfolio Performance">
+        </div>
+    </div>
+    <img src="static/images/agent1.png" alt="agent1" class="dog-image">
+
+</body>
+
+
+
+
+</html>
