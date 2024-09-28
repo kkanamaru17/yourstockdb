@@ -8,14 +8,26 @@
     <title>Home</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="static/styles.css">
 </head>
 
-<body>
-    <h1>Welcome to StockDB</h1>
-    <a href="{{ url_for('login') }}">Login Page</a><br>
-    <a href="{{ url_for('register') }}">Register Page</a><br>
-    <img src="{{ url_for('static', filename='images/loopy.png') }}" alt="character" style="width:200px; height:auto;">
+<body class="body-home">
+    <header class="main-header">
+        <div class="logo">StockDB</div>
+        <nav>
+            <a href="{{ url_for('login') }}">Login Page</a><br>
+            <a href="{{ url_for('register') }}">Register</a><br>
+        </nav>
+    </header>
+
+    <div class="banner"></div>
+    <img src="{{ url_for('static', filename='images/loopy.png') }}" alt="character" style="width:200px; height:auto;" class="dog-image">
+
+    <footer class="footer-home">
+        <p>&copy; 2024 StockDB. All rights reserved.</p>
+    </footer>
 
 </body>
 
