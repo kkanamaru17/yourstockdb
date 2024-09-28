@@ -1,28 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ language }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Stock</title>
+    <title>{{ translations[language]['edit_stock'] }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
     <div class="container">
-        <h2>Edit Stock</h2>
+        <h2>{{ translations[language]['edit_stock'] }}</h2>
+        <div class="language-selector">
+            <a href="{{ url_for('set_language', language='en') }}">EN /</a>
+            <a href="{{ url_for('set_language', language='jp') }}">日本語</a>
+        </div>
         <form method="POST">
-            <label for="ticker">Stock Ticker:</label>
+            <label for="ticker">{{ translations[language]['stock_ticker'] }}:</label>
             <input type="text" id="ticker" name="ticker" class="form-input" value="{{ stock.ticker if stock is defined and stock.ticker is not none else '' }}" required>
             
-            <label for="purchase_price">Purchase Price:</label>
+            <label for="purchase_price">{{ translations[language]['purchase_price'] }}:</label>
             <input type="number" id="purchase_price" name="purchase_price" class="form-input" step="0.01" value="{{ stock.purchase_price|float if stock is defined and stock.purchase_price is not none else '' }}" required>
             
-            <label for="num_shares">Number of Shares:</label>
+            <label for="num_shares">{{ translations[language]['number_of_shares'] }}:</label>
             <input type="number" id="num_shares" name="num_shares" class="form-input" value="{{ stock.shares|int if stock is defined and stock.shares is not none else '' }}" required>
             
-            <label for="purchase_date">Purchase Date:</label>
+            <label for="purchase_date">{{ translations[language]['purchase_date'] }}:</label>
             <input type="date" id="purchase_date" name="purchase_date" class="form-input" value="{{ stock.purchase_date.strftime('%Y-%m-%d') if stock is defined and stock.purchase_date is not none else '' }}" required>
             
-            <button type="submit" class="form-input">Update Stock</button>
+            <button type="submit" class="form-input">{{ translations[language]['update_stock'] }}</button>
         </form>
     </div>
 </body>

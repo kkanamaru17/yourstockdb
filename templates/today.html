@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ language }}">
 
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>{{ translations[language]['todays_digest'] }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="static/styles.css">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
@@ -26,32 +26,36 @@
 <body>
     <div id="confetti-canvas"></div>
     <div class="container">
-        <h1>Today's Digest</h1>
-        <a href="{{ url_for('portfolio') }}">Portfolio</a><br>
-        <a href="{{ url_for('dashboard') }}">Back to Stock DB</a><br><br>
+        <h1>{{ translations[language]['todays_digest'] }}</h1>
+        <div class="language-selector">
+            <a href="{{ url_for('set_language', language='en') }}">EN /</a>
+            <a href="{{ url_for('set_language', language='jp') }}">日本語</a>
+        </div>
+        <a href="{{ url_for('portfolio') }}">{{ translations[language]['portfolio'] }}</a><br>
+        <a href="{{ url_for('dashboard') }}">{{ translations[language]['back_to_stock_db'] }}</a><br><br>
         <div class="todays-digest">
-            <h3>Portfolio: 
+            <h3>{{ translations[language]['portfolio_performance'] }}: 
                 <span class="{{ 'positive-performance' if portfolio_performance and portfolio_performance >= 0 else 'negative-performance' }}">
                     {{ '{:+.2f}%'.format(portfolio_performance|default(0)) }}
                 </span>
             </h3>
-            <h3>Nikkei 225: 
+            <h3>{{ translations[language]['nikkei_225'] }}: 
                 <span class="{{ 'positive-performance' if nikkei_performance and nikkei_performance >= 0 else 'negative-performance' }}">
                     {{ '{:+.2f}%'.format(nikkei_performance|default(0)) }}
                 </span>
-                {% if nikkei_date %}<span class="date-info">(as of {{ nikkei_date }})</span>{% endif %}
+                {% if nikkei_date %}<span class="date-info">({{ translations[language]['as_of'] }} {{ nikkei_date }})</span>{% endif %}
             </h3>
-            <h3>S&P 500: 
+            <h3>{{ translations[language]['sp_500'] }}: 
                 <span class="{{ 'positive-performance' if sp_performance and sp_performance >= 0 else 'negative-performance' }}">
                     {{ '{:+.2f}%'.format(sp_performance|default(0)) }}
                 </span>
-                {% if sp_date %}<span class="date-info">(as of {{ sp_date }})</span>{% endif %}
+                {% if sp_date %}<span class="date-info">({{ translations[language]['as_of'] }} {{ sp_date }})</span>{% endif %}
             </h3>
         </div>
         
-        <h2>Stock Performances</h2>
+        <h2>{{ translations[language]['stock_performances'] }}</h2>
         <div class="performance-chart">
-            <img src="data:image/png;base64,{{ performance_chart }}" alt="Stock Performances">
+            <img src="data:image/png;base64,{{ performance_chart }}" alt="{{ translations[language]['stock_performances'] }}">
         </div>
 
         <img src="static/images/agent2.png" alt="agent" class="agent-image">

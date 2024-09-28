@@ -16,9 +16,14 @@
 <body class="body-home">
     <header class="main-header">
         <div class="logo">StockDB</div>
+        <div class="language-selector">
+            <a href="{{ url_for('set_language', language='en') }}">EN /</a>
+            <a href="{{ url_for('set_language', language='jp') }}">日本語</a>
+        </div>
         <nav>
-            <a href="{{ url_for('login') }}">Login Page</a><br>
-            <a href="{{ url_for('register') }}">Register</a><br>
+            <a href="{{ url_for('login') }}">{{ translations[language]['login_page'] }}</a><br>
+            <a href="{{ url_for('register') }}">{{ translations[language]['register'] }}</a><br>    
+
         </nav>
     </header>
 

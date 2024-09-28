@@ -1,21 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ language }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockAN</title>
+    <title>{{ translations[language]['stock_analysis'] }}</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h1>Stock Analysis</h1>
-        <a href="{{ url_for('dashboard') }}">Back to Stock DB</a><br><br>
+        <h1>{{ translations[language]['stock_analysis'] }}</h1>
+        <div class="language-selector">
+            <a href="{{ url_for('set_language', language='en') }}">EN /</a>
+            <a href="{{ url_for('set_language', language='jp') }}">日本語</a>
+        </div>
+        <a href="{{ url_for('dashboard') }}">{{ translations[language]['back_to_stock_db'] }}</a><br><br>
         <form id="stock-form" action="{{ url_for('stockan') }}" method="POST">
-            <label for="ticker">Stock Ticker:</label>
+            <label for="ticker">{{ translations[language]['stock_ticker'] }}:</label>
             <input type="text" id="ticker" name="ticker" value="{{ ticker or '' }}" required>
-            <button type="submit">Get Stock Info</button>
+            <button type="submit">{{ translations[language]['get_stock_info'] }}</button>
         </form>
         
         {% if stock_info %}
@@ -23,33 +27,33 @@
         <div class="stock-info-columns">
             <div class="left-column">
                 <ul>
-                    <li>Market Cap: ${{ stock_info.market_cap }}</li>
-                    <li>P/E Ratio: {{ stock_info.per }}</li>
-                    <li>P/B Ratio: {{ stock_info.pbr }}</li>
-                    <li>Dividend Yield: {{ stock_info.dividend_yield }}%</li>
+                    <li>{{ translations[language]['market_cap'] }}: ${{ stock_info.market_cap }}</li>
+                    <li>{{ translations[language]['pe_ratio'] }}: {{ stock_info.per }}</li>
+                    <li>{{ translations[language]['pb_ratio'] }}: {{ stock_info.pbr }}</li>
+                    <li>{{ translations[language]['dividend_yield'] }}: {{ stock_info.dividend_yield }}%</li>
                 </ul>
             </div>
             <div class="right-column">
                 <ul>
-                    <li>Target Mean Price: {{ stock_info.targetMeanPrice }}</li>
-                    <li>Target Median Price: {{ stock_info.targetMedianPrice }}</li>
-                    <li>Analyst Rating: {{ stock_info.analystRating }}</li>
-                    <li>Number of Analysts: {{ stock_info.numberofAnalysts }}</li>
+                    <li>{{ translations[language]['target_mean_price'] }}: {{ stock_info.targetMeanPrice }}</li>
+                    <li>{{ translations[language]['target_median_price'] }}: {{ stock_info.targetMedianPrice }}</li>
+                    <li>{{ translations[language]['analyst_rating'] }}: {{ stock_info.analystRating }}</li>
+                    <li>{{ translations[language]['number_of_analysts'] }}: {{ stock_info.numberofAnalysts }}</li>
                 </ul>
             </div>
         </div>
-        <h3>Recent Stock Chart</h3>
+        <h3>{{ translations[language]['recent_stock_chart'] }}</h3>
         <div class="chart-container">
-            <img src="{{ stock_info.chart_image }}" alt="Stock Chart" id="stock-chart">
+            <img src="{{ stock_info.chart_image }}" alt="{{ translations[language]['recent_stock_chart'] }}" id="stock-chart">
         </div>
         
         {% if stock_info.valuation_history %}
-            <h3>Valuation History</h3>
+            <h3>{{ translations[language]['valuation_history'] }}</h3>
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th>Metric</th>
+                            <th>{{ translations[language]['metric'] }}</th>
                             {% for date in stock_info.valuation_history.keys() %}
                                 <th>{{ date }}</th>
                             {% endfor %}
@@ -69,15 +73,15 @@
                 </table>
             </div>
         {% else %}
-            <p>Valuation history is not available for this stock.</p>
+            <p>{{ translations[language]['valuation_not_available'] }}</p>
         {% endif %}
         
-        <h3>Memo</h3>
+        <h3>{{ translations[language]['memo'] }}</h3>
         <form method="POST" action="{{ url_for('save_memo') }}">
             <input type="hidden" name="ticker" value="{{ stock_info.ticker }}">
             <textarea name="memo" rows="4" cols="50">{{ stock_info.memo }}</textarea>
             <br>
-            <button type="submit">Save Memo</button>
+            <button type="submit">{{ translations[language]['save_memo'] }}</button>
         </form>
         {% endif %}
     </div>

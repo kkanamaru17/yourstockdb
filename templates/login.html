@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ language }}">
 
 <head>
     <meta charset="UTF-8">
@@ -7,33 +7,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <title>Login</title>
+    <title>{{ translations[language]['login'] }}</title>
 </head>
 
 <body>
     <div class="container">
-        <h1>Login</h1>
+        <h1>{{ translations[language]['login'] }}</h1>
+        <div class="language-selector">
+            <a href="{{ url_for('set_language', language='en') }}">EN /</a>
+            <a href="{{ url_for('set_language', language='jp') }}">日本語</a>
+        </div>
         <form method="POST" action="">
             {{ form.hidden_tag() }}
             <div>
-                <label for="{{ form.username.id }}">Username</label>
+                <label for="{{ form.username.id }}">{{ translations[language]['username'] }}</label>
                 {{ form.username(class="form-input") }}
             </div>
             <div>
-                <label for="{{ form.password.id }}">Password</label>
+                <label for="{{ form.password.id }}">{{ translations[language]['password'] }}</label>
                 {{ form.password(class="form-input") }}
             </div>
-            {{ form.submit(class="btn") }}
+            {{ form.submit(class="btn", value=translations[language]['submit']) }}
         </form>
 
         <p>
-            <a href="{{ url_for('register') }}">Don't have an account? Sign Up</a>
+            <a href="{{ url_for('register') }}">{{ translations[language]['no_account'] }}</a>
         </p>
 
-        <h3>Or</h3>
+        <h3>{{ translations[language]['or'] }}</h3>
         <a href="{{ url_for('google.login') }}" class="btn-google">
             <img src="{{ url_for('static', filename='images/googlelogo.png') }}" alt="Google logo" class="google-icon">
-            Continue with Google
+            {{ translations[language]['continue_with_google'] }}
         </a>
     </div>
 </body>

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ language }}">
 
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>{{ translations[language]['dashboard'] }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="static/styles.css">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
@@ -14,45 +14,49 @@
 <body>
 
     <div class="container">
-        <h1>Welcome, {{ current_user.username }}!</h1>
-        <h1>Stock DB</h1>
-        <a href="{{ url_for('logout') }}">Logout</a><br>
-        <a href="{{ url_for('stockan') }}">Stock Analysis</a><span>: to see info on a stock</span><br>
-        <a href="{{ url_for('portfolio') }}">Portfolio</a><br>
-        <a href="{{ url_for('today') }}">Today's Digest</a><br>
-        <h2>Portfolio Return: {{ portfolio_return|round(2) }}%</h2>
-        <h3>with dividend: {{ portfolio_return_withincome|round(2) }}%</h3>
+        <h1>{{ translations[language]['welcome_user'].format(current_user.username) }}</h1>
+        <h1>{{ translations[language]['stock_db'] }}</h1>
+        <div class="language-selector">
+            <a href="{{ url_for('set_language', language='en') }}">EN /</a>
+            <a href="{{ url_for('set_language', language='jp') }}">日本語</a>
+        </div>
+        <a href="{{ url_for('logout') }}">{{ translations[language]['logout'] }}</a><br>
+        <a href="{{ url_for('stockan') }}">{{ translations[language]['stock_analysis'] }}</a><span>: {{ translations[language]['stock_analysis_desc'] }}</span><br>
+        <a href="{{ url_for('portfolio') }}">{{ translations[language]['portfolio'] }}</a><br>
+        <a href="{{ url_for('today') }}">{{ translations[language]['todays_digest'] }}</a><br>
+        <h2>{{ translations[language]['portfolio_return'] }}: {{ portfolio_return|round(2) }}%</h2>
+        <h3>{{ translations[language]['with_dividend'] }}: {{ portfolio_return_withincome|round(2) }}%</h3>
         <form action="{{ url_for('dashboard') }}" method="post">
-            <label for="ticker">Stock Ticker:</label>            
-            <input type="text" id="ticker" name="ticker" required placeholder="JPN stock: 'XXXX.T' eg '7203.T' for Toyota">
+            <label for="ticker">{{ translations[language]['stock_ticker'] }}:</label>            
+            <input type="text" id="ticker" name="ticker" required placeholder="{{ translations[language]['japanese_stock_hint'] }}">
             
-            <label for="purchase_price">Purchase Price:</label>
+            <label for="purchase_price">{{ translations[language]['purchase_price'] }}:</label>
             <input type="number" id="purchase_price" name="purchase_price" step="0.01" required>
             
-            <label for="num_shares">Number of Shares:</label>
+            <label for="num_shares">{{ translations[language]['number_of_shares'] }}:</label>
             <input type="number" id="num_shares" name="num_shares" step="1" required>
             
-            <label for="purchase_date">Purchase Date:</label>
+            <label for="purchase_date">{{ translations[language]['purchase_date'] }}:</label>
             <input type="date" id="purchase_date" name="purchase_date" required>
             
-            <button type="submit">Add Data</button>
+            <button type="submit">{{ translations[language]['add_data'] }}</button>
         </form>
-        <h2>Stock Data</h2>
+        <h2>{{ translations[language]['stock_data'] }}</h2>
         <div class="stock-data">
             <div class="table-container">
                 <table class="stock-table">
                     <thead>
                         <tr>
-                            <th>Ticker</th>
-                            <th class="company-name">Company Name</th>
-                            <th>Purchase Price</th>
-                            <th>Shares</th>
-                            <th>Latest Price</th>
-                            <th>Capital Gain</th>
-                            <th>Income Gain</th>
-                            <th>Dividend Yield</th>
-                            <th>Purchase Date</th>  <!-- Add this line -->
-                            <th>Action</th>
+                            <th>{{ translations[language]['ticker'] }}</th>
+                            <th class="company-name">{{ translations[language]['company_name'] }}</th>
+                            <th>{{ translations[language]['purchase_price'] }}</th>
+                            <th>{{ translations[language]['shares'] }}</th>
+                            <th>{{ translations[language]['latest_price'] }}</th>
+                            <th>{{ translations[language]['capital_gain'] }}</th>
+                            <th>{{ translations[language]['income_gain'] }}</th>
+                            <th>{{ translations[language]['dividend_yield'] }}</th>
+                            <th>{{ translations[language]['purchase_date'] }}</th>  <!-- Add this line -->
+                            <th>{{ translations[language]['action'] }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -68,10 +72,10 @@
                             <td>{{ stock.div_yield|round(2) }}%</td>
                             <td>{{ stock.purchase_date.strftime('%Y-%m-%d') }}</td>  <!-- Add this line -->
                             <td>
-                                <a href="{{ url_for('edit_stock', stock_id=stock.id) }}" class="edit-btn">Edit</a>
+                                <a href="{{ url_for('edit_stock', stock_id=stock.id) }}" class="edit-btn">{{ translations[language]['edit'] }}</a>
                                 <form action="/delete" method="post">
                                     <input type="hidden" name="ticker" value="{{ stock.ticker }}">
-                                    <button type="submit" class="delete-btn">Delete</button>
+                                    <button type="submit" class="delete-btn">{{ translations[language]['delete'] }}</button>
                                 </form>
                             </td>
                         </tr>
@@ -84,17 +88,17 @@
                 <div class="stock-card">
                     <h3><a href="{{ url_for('stockan', ticker=stock.ticker) }}">{{ stock.ticker }}</a></h3>
                     <p><strong>{{ stock.company_name }}</strong></p>
-                    <p>Purchase Price: {{ stock.purchase_price|round(2) }}</p>
-                    <p>Shares: {{ stock.shares }}</p>
-                    <p>Latest Price: {{ stock.latest_price|round(2) }}</p>
-                    <p>Capital Gain: {{ stock.return_performance|round(2) }}%</p>
-                    <p>Income Gain: {{ stock.income_gain_pct|round(2) }}%</p>
-                    <p>Dividend Yield: {{ stock.div_yield|round(2) }}%</p>
-                    <p>Purchase Date: {{ stock.purchase_date.strftime('%Y-%m-%d') }}</p>
-                    <a href="{{ url_for('edit_stock', stock_id=stock.id) }}" class="edit-btn">Edit</a>
+                    <p>{{ translations[language]['purchase_price'] }}: {{ stock.purchase_price|round(2) }}</p>
+                    <p>{{ translations[language]['shares'] }}: {{ stock.shares }}</p>
+                    <p>{{ translations[language]['latest_price'] }}: {{ stock.latest_price|round(2) }}</p>
+                    <p>{{ translations[language]['capital_gain'] }}: {{ stock.return_performance|round(2) }}%</p>
+                    <p>{{ translations[language]['income_gain'] }}: {{ stock.income_gain_pct|round(2) }}%</p>
+                    <p>{{ translations[language]['dividend_yield'] }}: {{ stock.div_yield|round(2) }}%</p>
+                    <p>{{ translations[language]['purchase_date'] }}: {{ stock.purchase_date.strftime('%Y-%m-%d') }}</p>
+                    <a href="{{ url_for('edit_stock', stock_id=stock.id) }}" class="edit-btn">{{ translations[language]['edit'] }}</a>
                     <form action="/delete" method="post">
                         <input type="hidden" name="ticker" value="{{ stock.ticker }}">
-                        <button type="submit" class="delete-btn">Delete</button>
+                        <button type="submit" class="delete-btn">{{ translations[language]['delete'] }}</button>
                     </form>
                 </div>
                 {% endfor %}
@@ -103,18 +107,18 @@
 
         <div class="download-csv-container">
             <a href="{{ url_for('download_csv') }}" class="btn-google">
-                Download CSV
+                {{ translations[language]['download_csv'] }}
             </a>
         </div>
     </div>
 
     <footer class="footer">
         <div class="footer-content">
-            <p>&copy; 2024 Stock DB. All rights reserved.</p>
+            <p>{{ translations[language]['footer_rights'] }}</p>
             <nav class="footer-nav">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
-                <a href="#">Contact Us</a>
+                <a href="#">{{ translations[language]['privacy_policy'] }}</a>
+                <a href="#">{{ translations[language]['terms_of_service'] }}</a>
+                <a href="#">{{ translations[language]['contact_us'] }}</a>
             </nav>
         </div>
     </footer>

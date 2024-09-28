@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, redirect, request, send_file, make_response, flash
+from flask import Flask, render_template, url_for, redirect, g, request, send_file, make_response, flash, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
@@ -29,6 +29,7 @@ from flask_dance.consumer import oauth_authorized
 from sqlalchemy.orm.exc import NoResultFound
 import os
 from dotenv import load_dotenv
+from translations import translations
 load_dotenv()  # This loads the variables from .env
 
 app = Flask(__name__)
@@ -51,6 +52,14 @@ google_bp = make_google_blueprint(
     scope=["profile", "email"]
 )
 app.register_blueprint(google_bp, url_prefix="/login")
+
+@app.before_request
+def before_request():
+    g.language = session.get('language', 'en')  # Default to English
+
+@app.context_processor
+def inject_language():
+    return dict(language=g.language, translations=translations)
 
 import logging
 
@@ -367,6 +376,12 @@ class LoginForm(FlaskForm):
 def home():
     return render_template('home.html')
 
+@app.route('/set_language/<language>')
+def set_language(language):
+    if language in ['en', 'jp']:
+        session['language'] = language
+    return redirect(request.referrer or url_for('home'))
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -384,7 +399,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('login'))
+    return redirect(url_for('home'))
 
 
 @ app.route('/register', methods=['GET', 'POST'])
