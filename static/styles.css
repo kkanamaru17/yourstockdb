@@ -745,3 +745,18 @@ input[type="password"].form-input {
     margin-left: auto;
     margin-right: auto;
 }
+
+.get-started-btn {
+    display: block;
+    width: 120px; /* Reduced from 150px */
+    margin: 15px auto 30px; /* Slightly reduced margins */
+    text-align: center;
+    text-decoration: none;
+    padding: 3px 5px; /* Reduced padding */
+    font-weight: bold;
+    font-size: 0.9em; /* Reduced font size */
+}
+
+.get-started-btn:hover {
+    opacity: 0.9;
+}

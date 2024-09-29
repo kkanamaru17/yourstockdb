@@ -119,6 +119,7 @@ translations = {
         'long_term_description': "Portfolio digest shows number of days you've held your portfolio stocks, supporting your long term investment journey.",
         'concise_digest': 'Concise Digest',
         'concise_digest_description': "Today's digest page shows you just the info you need, including portfolio performance vs the index and visual aid for top/worst performers.",
+        'get_started': 'Get Started',
     },
     'jp': {
         # translations for home and login
@@ -240,6 +241,6 @@ translations = {
         'long_term_description': 'ポートフォリオダイジェストでは、保有株式の日数を表示し、長期投資の旅をサポートします。',
         'concise_digest': '簡潔なダイジェスト',
         'concise_digest_description': '今日のダイジェストページでは、ポートフォリオのパフォーマンス対指数比較や、トップ/ワーストパフォーマーの視覚的補助を含む、必要な情報だけを表示します。',
-
+        'get_started': '始める',
     }
 }
