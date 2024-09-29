@@ -30,9 +30,24 @@
     <div class="banner"></div>
     <img src="{{ url_for('static', filename='images/loopy.png') }}" alt="character" style="width:100px; height:auto;" class="dog-image">
 
-    <!-- <footer class="footer-home">
-        <p>&copy; 2024 StockDB. All rights reserved.</p>
-    </footer> -->
+    <section class="features">
+        <h2 class="logo-style">{{ translations[language]['platform_philosophy'] }}</h2>
+        <div class="feature-list">
+            <div class="feature-item">
+                <h3>{{ translations[language]['dividend_matters'] }}</h3>
+                <p>{{ translations[language]['dividend_description'] }}</p>
+            </div>
+            <div class="feature-item">
+                <h3>{{ translations[language]['long_term_perspective'] }}</h3>
+                <p>{{ translations[language]['long_term_description'] }}</p>
+            </div>
+            <div class="feature-item">
+                <h3>{{ translations[language]['concise_digest'] }}</h3>
+                <p>{{ translations[language]['concise_digest_description'] }}</p>
+            </div>
+        </div>
+    </section>
+
     <footer class="footer">
         <div class="footer-content">
             <p>&copy; 2024 Stock DB. All rights reserved.</p>

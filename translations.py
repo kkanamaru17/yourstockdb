@@ -109,9 +109,16 @@ translations = {
         'username': 'Username',
         'password': 'Password',
         'submit': 'Submit',
-        'already_have_account': 'Already have an account? Log In'        
+        'already_have_account': 'Already have an account? Log In',
 
-
+        # ... existing translations ...
+        'platform_philosophy': "Clarity Over Complexity: long-term growth over reactive trading.",
+        'dividend_matters': 'Dividend Matters',
+        'dividend_description': 'You can now see total portfolio return including dividends you received.',
+        'long_term_perspective': 'Long Term Perspective',
+        'long_term_description': "Portfolio digest shows number of days you've held your portfolio stocks, supporting your long term investment journey.",
+        'concise_digest': 'Concise Digest',
+        'concise_digest_description': "Today's digest page shows you just the info you need, including portfolio performance vs the index and visual aid for top/worst performers.",
     },
     'jp': {
         # translations for home and login
@@ -202,9 +209,9 @@ translations = {
         'analyst_rating': 'アナリスト評価',
         'number_of_analysts': 'アナリスト数',
         'recent_stock_chart': '最近の株価チャート',
-        'valuation_history': '評価履歴',
+        'valuation_history': 'Valuation History',
         'metric': '指標',
-        'valuation_not_available': 'この株式の評価履歴は利用できません。',
+        'valuation_not_available': 'この株式のValuation履歴は利用できません。',
         'memo': 'メモ',
         'save_memo': 'メモを保存',
 
@@ -223,7 +230,16 @@ translations = {
         'username': 'ユーザー名',
         'password': 'パスワード',
         'submit': '送信',
-        'already_have_account': 'すでにアカウントをお持ちですか？'
+        'already_have_account': 'すでにアカウントをお持ちですか？',
+
+        # ... existing translations ...
+        'platform_philosophy': "複雑さよりも明瞭さ：頻繁な取引より長期的成長",
+        'dividend_matters': '配当の重要性',
+        'dividend_description': '受け取った配当金を含む総ポートフォリオリターンを確認できるようになりました。',
+        'long_term_perspective': '長期的な視点',
+        'long_term_description': 'ポートフォリオダイジェストでは、保有株式の日数を表示し、長期投資の旅をサポートします。',
+        'concise_digest': '簡潔なダイジェスト',
+        'concise_digest_description': '今日のダイジェストページでは、ポートフォリオのパフォーマンス対指数比較や、トップ/ワーストパフォーマーの視覚的補助を含む、必要な情報だけを表示します。',
 
     }
 }

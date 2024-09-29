@@ -12,9 +12,10 @@
 </head>
 
 <body>
-
     <div class="container">
-        <h1>{{ translations[language]['welcome_user'].format(current_user.username) }}</h1>
+        <div class="welcome-message">
+            {{ translations[language]['welcome_user'].format(current_user.username) }}
+        </div>
         <h1>{{ translations[language]['stock_db'] }}</h1>
         <div class="language-selector">
             <a href="{{ url_for('set_language', language='en') }}">EN /</a>
