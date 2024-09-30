@@ -760,3 +760,10 @@ input[type="password"].form-input {
 .get-started-btn:hover {
     opacity: 0.9;
 }
+
+.chart-footnote {
+    font-size: 0.8em;
+    font-style: italic;
+    color: #666;
+    margin-top: 5px;
+}

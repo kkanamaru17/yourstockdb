@@ -37,7 +37,7 @@
         <ul>
             <li>{{ translations[language]['total_value'] }}: {{ '{:,}'.format(total_value|round(0)|int) }}</li>
             <li>{{ translations[language]['total_income_gain'] }}: {{ '{:,}'.format(total_income_gain|round(0)|int) }}</li>
-            <li>{{ translations[language]['return'] }}: {{ '{:,}'.format(return_value|round(0)|int) }}</li>
+            <li>{{ translations[language]['total_capital_gain'] }}: {{ '{:,}'.format(return_value|round(0)|int) }}</li>
             <!-- <li>Dividend: {{ '{:,}'.format(dividend_value|round(0)|int) }}</li> -->
             <li>{{ translations[language]['number_of_stocks'] }}: {{ num_stocks }}</li>
             <li>{{ translations[language]['win_rate'] }}: {{ win_rate|round(2) }}%</li>
@@ -54,6 +54,9 @@
         <div class="performance-chart">
             <img src="data:image/png;base64,{{ portfolio_performance_chart }}" alt="{{ translations[language]['portfolio_performance'] }}">
         </div>
+        <p class="chart-footnote">
+            {{ translations[language]['gain_explanation'] }}
+        </p>
     </div>
     <img src="static/images/agent1.png" alt="agent1" class="dog-image">
 

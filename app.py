@@ -722,10 +722,10 @@ def portfolio():
             total_return = capital_gain + income_gain
             ax.text(total_return + 0.5 if total_return >= 0 else total_return - 0.5, 
                     i, 
-                    f'{total_return:.2f}%', 
+                    f'{total_return:.1f}%', 
                     va='center', 
                     ha='left' if total_return >= 0 else 'right', 
-                    fontweight='bold')
+                    fontsize=12)
 
         # Remove top and right spines
         ax.spines['top'].set_visible(False)

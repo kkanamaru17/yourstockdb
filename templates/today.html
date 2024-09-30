@@ -39,7 +39,7 @@
         </div> -->
 
         <div class="todays-digest">
-            <h3>{{ translations[language]['portfolio_performance'] }}: 
+            <h3>{{ translations[language]['portfolio_performance_today'] }}: 
                 <span class="{{ 'positive-performance' if portfolio_performance and portfolio_performance >= 0 else 'negative-performance' }}">
                     {{ '{:+.2f}%'.format(portfolio_performance|default(0)) }}
                 </span>
