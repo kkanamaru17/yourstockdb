@@ -10,6 +10,7 @@ from config import Config
 from datetime import datetime, date
 import yfinance as yf
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 plt.switch_backend('Agg')
 import matplotlib
 matplotlib.use('Agg')
@@ -675,38 +676,56 @@ def portfolio():
         # Create horizontal bar chart for portfolio performance
         portfolio_performance_data = []
         for stock in stock_data:
-            portfolio_performance_data.append((stock.company_name, stock.return_performance))  # Assuming return_performance is calculated
+            capital_gain = stock.return_performance
+            income_gain = stock.income_gain_pct
+            total_return = capital_gain + income_gain
+            portfolio_performance_data.append((stock.company_name, capital_gain, income_gain, total_return))
 
-        # Sort portfolio performance data from highest to lowest
-        portfolio_performance_data.sort(key=lambda x: x[1], reverse=True)
+        # Sort portfolio performance data from highest to lowest total return
+        portfolio_performance_data.sort(key=lambda x: x[3], reverse=True)
 
         # Create the portfolio performance chart
-        fig, ax = plt.subplots(figsize=(8, max(4, len(portfolio_performance_data) * 0.4)))
-        portfolio_company_names, portfolio_performances = zip(*portfolio_performance_data)
+        fig, ax = plt.subplots(figsize=(12, max(6, len(portfolio_performance_data) * 0.4)))
+        company_names, capital_gains, income_gains, total_returns = zip(*portfolio_performance_data)
 
         # Truncate long company names
         max_name_length = 20
-        truncated_names = [name[:max_name_length] + '...' if len(name) > max_name_length else name for name in portfolio_company_names]
+        truncated_names = [name[:max_name_length] + '...' if len(name) > max_name_length else name for name in company_names]
 
-        # Truncate long company names
-        portfolio_truncated_names = [name[:max_name_length] + '...' if len(name) > max_name_length else name for name in portfolio_company_names]
+        y_pos = range(len(company_names))
+        
+        # Plot the floating bars
+        bar_height = 0.8
+        for i, (capital_gain, income_gain) in enumerate(zip(capital_gains, income_gains)):
+            # Capital gain bar
+            ax.barh(i, capital_gain, align='center', color='white', edgecolor='black', height=bar_height)
+            
+            # Income gain bar
+            start = min(0, capital_gain)
+            end = max(0, capital_gain)
+            ax.barh(i, income_gain, left=end, align='center', color='white', edgecolor='black', height=bar_height, hatch='///')
 
-        y_pos = range(len(portfolio_company_names))
-        portfolio_bars = ax.barh(y_pos, portfolio_performances, align='center', color='white', edgecolor='black')
         ax.set_yticks(y_pos)
-        ax.set_yticklabels(portfolio_truncated_names)
+        ax.set_yticklabels(truncated_names)
         ax.invert_yaxis()  # Labels read top-to-bottom
         ax.set_xlabel('Performance (%)')
-        ax.set_title("Portfolio Performance")
+        ax.set_title("Portfolio Performance (Capital Gain + Income Gain)")
 
+        # Create a custom legend
 
+        legend_elements = [Patch(facecolor='white', edgecolor='black', label='Capital Gain'),
+                           Patch(facecolor='white', edgecolor='black', hatch='///', label='Income Gain')]
+        ax.legend(handles=legend_elements, loc='lower right')
 
-        # Add performance labels to the end of each bar
-        for i, bar in enumerate(portfolio_bars):
-            width = bar.get_width()
-            gap = 0.03
-            ax.text(width + gap, bar.get_y() + bar.get_height()/2, f'{portfolio_performances[i]:.2f}%', 
-                    ha='left', va='center', color='black', fontsize=12)
+        # Add total return labels to the end of each bar
+        for i, (capital_gain, income_gain) in enumerate(zip(capital_gains, income_gains)):
+            total_return = capital_gain + income_gain
+            ax.text(total_return + 0.5 if total_return >= 0 else total_return - 0.5, 
+                    i, 
+                    f'{total_return:.2f}%', 
+                    va='center', 
+                    ha='left' if total_return >= 0 else 'right', 
+                    fontweight='bold')
 
         # Remove top and right spines
         ax.spines['top'].set_visible(False)

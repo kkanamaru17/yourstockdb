@@ -33,6 +33,11 @@
         </div>
         <a href="{{ url_for('portfolio') }}">{{ translations[language]['portfolio'] }}</a><br>
         <a href="{{ url_for('dashboard') }}">{{ translations[language]['back_to_stock_db'] }}</a><br><br>
+
+        <!-- <div class="share-buttons">
+            <button onclick="captureScreenshot()">Capture & Tweet</button>
+        </div> -->
+
         <div class="todays-digest">
             <h3>{{ translations[language]['portfolio_performance'] }}: 
                 <span class="{{ 'positive-performance' if portfolio_performance and portfolio_performance >= 0 else 'negative-performance' }}">
@@ -93,6 +98,23 @@
             }
         });
     </script>
+
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        function captureScreenshot() {
+            html2canvas(document.body).then(function(canvas) {
+                var imgData = canvas.toDataURL("image/png");
+
+                // Create a temporary form to post the image to Twitter
+                var tweetText = encodeURIComponent("Check out today's portfolio performance!");
+                var tweetUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
+
+                // Open the Twitter sharing window directly
+                window.open(tweetUrl, '_blank');
+            });
+        }
+    </script> -->
+
 </body>
 
 </html>
