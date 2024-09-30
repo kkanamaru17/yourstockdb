@@ -10,16 +10,17 @@
 
 <body>
     <div class="container">
+        <!-- <a href="{{ url_for('logout') }}">{{ translations[language]['logout'] }}</a><br> -->
         <h1>{{ translations[language]['portfolio'] }}</h1>
         <div class="language-selector">
             <a href="{{ url_for('set_language', language='en') }}">EN /</a>
             <a href="{{ url_for('set_language', language='jp') }}">日本語</a>
         </div>
-        <a href="{{ url_for('logout') }}">{{ translations[language]['logout'] }}</a><br>
-        <a href="{{ url_for('stockan') }}">{{ translations[language]['stock_analysis'] }}</a><span>: {{ translations[language]['stock_analysis_desc'] }}</span><br>
-        <a href="{{ url_for('dashboard') }}">{{ translations[language]['back_to_stock_db'] }}</a><br>
-        <a href="{{ url_for('today') }}">{{ translations[language]['todays_digest'] }}</a><br><br>
-
+        <nav class="dashboard-nav">
+            <a href="{{ url_for('dashboard') }}">{{ translations[language]['back_to_stock_db'] }}</a><br>
+            <a href="{{ url_for('today') }}">{{ translations[language]['todays_digest'] }}</a><br><br>
+            <a href="{{ url_for('stockan') }}">{{ translations[language]['stock_analysis'] }}</a><br>
+        </nav>
         <div class="todays-digest">
             <h3>{{ translations[language]['portfolio_return'] }}: 
                 <span class="{{ 'positive-return' if portfolio_return and portfolio_return >= 0 else 'negative-return' }}">

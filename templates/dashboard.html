@@ -15,16 +15,18 @@
     <div class="container">
         <div class="welcome-message">
             {{ translations[language]['welcome_user'].format(current_user.username) }}
+            <a href="{{ url_for('logout') }}">{{ translations[language]['logout'] }}</a>
         </div>
         <h1>{{ translations[language]['stock_db'] }}</h1>
         <div class="language-selector">
             <a href="{{ url_for('set_language', language='en') }}">EN /</a>
             <a href="{{ url_for('set_language', language='jp') }}">日本語</a>
         </div>
-        <a href="{{ url_for('logout') }}">{{ translations[language]['logout'] }}</a><br>
-        <a href="{{ url_for('stockan') }}">{{ translations[language]['stock_analysis'] }}</a><span>: {{ translations[language]['stock_analysis_desc'] }}</span><br>
-        <a href="{{ url_for('portfolio') }}">{{ translations[language]['portfolio'] }}</a><br>
-        <a href="{{ url_for('today') }}">{{ translations[language]['todays_digest'] }}</a><br>
+        <nav class="dashboard-nav">
+            <a href="{{ url_for('today') }}">{{ translations[language]['todays_digest'] }}</a>
+            <a href="{{ url_for('portfolio') }}">{{ translations[language]['portfolio'] }}</a>
+            <a href="{{ url_for('stockan') }}">{{ translations[language]['stock_analysis'] }}</a>
+        </nav>
         <h2>{{ translations[language]['portfolio_return'] }}: {{ portfolio_return|round(2) }}%</h2>
         <h3>{{ translations[language]['with_dividend'] }}: {{ portfolio_return_withincome|round(2) }}%</h3>
         <form action="{{ url_for('dashboard') }}" method="post">

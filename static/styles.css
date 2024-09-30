@@ -767,3 +767,39 @@ input[type="password"].form-input {
     color: #666;
     margin-top: 5px;
 }
+
+.dashboard-nav {
+    display: flex;
+    justify-content: flex-start; /* Changed from center to flex-start */
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.dashboard-nav a {
+    color: #333;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-size: 16px;
+    font-weight: 600;
+    /* padding: 5px 10px;
+    border-radius: 5px; */
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.dashboard-nav a:hover {
+    /* background-color: #50b3a2; */
+    color: #50b3a2;
+}
+
+@media (max-width: 768px) {
+    .dashboard-nav {
+        flex-direction: column;
+        align-items: flex-start; /* Changed from center to flex-start */
+    }
+
+    .dashboard-nav a {
+        width: auto; /* Changed from 100% to auto */
+        text-align: left; /* Changed from center to left */
+        padding: 10px;
+    }
+}

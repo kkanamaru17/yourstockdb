@@ -31,9 +31,11 @@
             <a href="{{ url_for('set_language', language='en') }}">EN /</a>
             <a href="{{ url_for('set_language', language='jp') }}">日本語</a>
         </div>
-        <a href="{{ url_for('portfolio') }}">{{ translations[language]['portfolio'] }}</a><br>
-        <a href="{{ url_for('dashboard') }}">{{ translations[language]['back_to_stock_db'] }}</a><br><br>
-
+        <nav class="dashboard-nav">
+            <a href="{{ url_for('dashboard') }}">{{ translations[language]['back_to_stock_db'] }}</a><br>
+            <a href="{{ url_for('portfolio') }}">{{ translations[language]['portfolio'] }}</a><br>
+            <a href="{{ url_for('stockan') }}">{{ translations[language]['stock_analysis'] }}</a>
+        </nav>
         <!-- <div class="share-buttons">
             <button onclick="captureScreenshot()">Capture & Tweet</button>
         </div> -->

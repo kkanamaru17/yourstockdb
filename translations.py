@@ -115,12 +115,14 @@ translations = {
         # ... existing translations ...
         'platform_philosophy': "Clarity Over Complexity: long-term growth over reactive trading.",
         'dividend_matters': 'Dividend Matters',
-        'dividend_description': 'You can now see total portfolio return including dividends you received.',
+        'dividend_description': "Stock DB shows both your capital gain and income gain, tracking the holistic returns with the dividends you've received so far",
         'long_term_perspective': 'Long Term Perspective',
-        'long_term_description': "Portfolio digest shows number of days you've held your portfolio stocks, supporting your long term investment journey.",
+        'long_term_description': "Portfolio digest shows the number of days you've held your portfolio stocks, supporting your long term investment journey.",
         'concise_digest': 'Concise Digest',
-        'concise_digest_description': "Today's digest page shows you just the info you need, including portfolio performance vs the index and visual aid for top/worst performers.",
+        'concise_digest_description': "Today's digest shows you just the info you need, including portfolio performance vs the index and a chart of top/worst performers.",
         'get_started': 'Get Started',
+        'insights': 'Insights',
+        'insights_description': 'Analyst rating & target price, valuation history, recent share price chart, memo to note down learnings, and much more',        
     },
     'jp': {
         # translations for home and login
@@ -237,11 +239,14 @@ translations = {
         # ... existing translations ...
         'platform_philosophy': "複雑さよりも明瞭さ：頻繁な取引より長期的成長",
         'dividend_matters': '配当の重要性',
-        'dividend_description': '受け取った配当金を含む総ポートフォリオリターンを確認できるようになりました。',
+        'dividend_description': '値上がり・値下がりに加えて、長期投資の妙味でもある配当金を含めた総合的なリターンが確認できます。',
         'long_term_perspective': '長期的な視点',
-        'long_term_description': 'ポートフォリオダイジェストでは、保有株式の日数を表示し、長期投資の旅をサポートします。',
+        'long_term_description': 'ポートフォリオダイジェストでは、保有株式の保有日数や長期保有・短期保有銘柄を確認可能。長期投資家への道をサポートします。',
         'concise_digest': '簡潔なダイジェスト',
-        'concise_digest_description': '今日のダイジェストページでは、ポートフォリオのパフォーマンス対指数比較や、トップ/ワーストパフォーマーの視覚的補助を含む、必要な情報だけを表示します。',
+        'concise_digest_description': '今日のダイジェストページでは、ポートフォリオの前日比増減・日経平均比較や、トップ/ワーストパフォーマーのチャートを含む、必要な情報を簡素にお伝えします。',
         'get_started': '始める',
+        'insights': 'インサイト',
+        'insights_description': 'アナリスト・レーティング&目標株価、バリュエーション指標、直近株価チャート、投資家としての学びを記録するメモ保存機能、など',
+
     }
 }
