@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body class="stockai-body">
+    <div class="stockai-container">
+        <h1 class="stockai-h1">AI Assistant</h1>
+        <nav class="dashboard-nav">
+            <a href="{{ url_for('dashboard') }}">{{ translations[language]['back_to_stock_db'] }}</a><br>
+            <a href="{{ url_for('stockan') }}">{{ translations[language]['stock_analysis'] }}</a>
+        </nav>
+        <div class="stockai-chat-container" id="chatContainer"></div>
+    </div>
+    <div class="stockai-input-wrapper">
+        <!-- <img src="{{ url_for('static', filename='images/agent2.png') }}" alt="Agent" class="stockai-agent-image"> -->
+        <form id="queryForm" class="stockai-form">
+            <input type="text" id="userInput" class="stockai-input" placeholder="Enter your query (stock-related or general)" required>
+            <div class="stockai-button-wrapper">
+                <button type="submit" class="stockai-button">Send</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chatContainer');
+        document.getElementById('queryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const userInput = document.getElementById('userInput');
+            const query = userInput.value;
+            
+            // Add user message to chat
+            addMessageToChat('user', query);
+            
+            // Clear input
+            userInput.value = '';
+            
+            fetch('/process-query', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ input: query }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                addMessageToChat('assistant', data.message);
+                if (data.image_path) {
+                    addImageToChat(data.image_path);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                addMessageToChat('assistant', `An error occurred: ${error.message}`);
+            });
+        });
+
+        function addMessageToChat(sender, message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('stockai-message', `stockai-${sender}-message`);
+            messageDiv.textContent = message;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function addImageToChat(imagePath) {
+            const imageDiv = document.createElement('div');
+            imageDiv.classList.add('stockai-message', 'stockai-assistant-message');
+            const image = document.createElement('img');
+            image.src = '/get-chart/' + imagePath;
+            image.classList.add('stockai-chart-image');
+            imageDiv.appendChild(image);
+            chatContainer.appendChild(imageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>

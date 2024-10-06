@@ -26,6 +26,7 @@
             <a href="{{ url_for('today') }}">{{ translations[language]['todays_digest'] }}</a>
             <a href="{{ url_for('portfolio') }}">{{ translations[language]['portfolio'] }}</a>
             <a href="{{ url_for('stockan') }}">{{ translations[language]['stock_analysis'] }}</a>
+            <a href="{{ url_for('stockai') }}">{{ translations[language]['ai_assistant'] }}</a>
         </nav>
         <h2>{{ translations[language]['portfolio_return'] }}: {{ portfolio_return|round(2) }}%</h2>
         <h3>{{ translations[language]['with_dividend'] }}: {{ portfolio_return_withincome|round(2) }}%</h3>

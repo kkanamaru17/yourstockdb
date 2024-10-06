@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, redirect, g, request, send_file, make_response, flash, session
+from flask import Flask, render_template, url_for, redirect, g, request, send_file, make_response, flash, session, jsonify, after_this_request
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
@@ -31,7 +31,20 @@ from sqlalchemy.orm.exc import NoResultFound
 import os
 from dotenv import load_dotenv
 from translations import translations
+import uuid
+import traceback
+import requests
+import json
+import functools
+import unicodedata
+import logging
+
 load_dotenv()  # This loads the variables from .env
+# Set up logging
+logging.getLogger('matplotlib').setLevel(logging.ERROR)
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -39,6 +52,8 @@ db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 migrate = Migrate(app, db)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -1040,6 +1055,297 @@ def edit_stock(stock_id):
         flash('Stock updated successfully', 'success')
         return redirect(url_for('dashboard'))
     return render_template('edit_stock.html', stock=stock)
+
+def normalize_japanese(text):
+    return unicodedata.normalize('NFKC', text)
+
+@functools.lru_cache(maxsize=100)
+def get_info_from_gpt(user_input):
+    if not OPENAI_API_KEY:
+        raise ValueError("OpenAI API key is not set")
+
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {OPENAI_API_KEY}'
+    }
+    
+    today = datetime.now().strftime("%Y-%m-%d")
+    user_input = normalize_japanese(user_input)
+    
+    logger.debug(f"Processing user input: {user_input}")
+    
+    initial_data = {
+        "model": "gpt-3.5-turbo",
+        "messages": [
+            {"role": "system", "content": f"""You are a financial assistant. Today's date is {today}. 
+            Determine if the query is about a chart, comparative chart, or general stock information. 
+            If it's a chart request, provide the ticker, start_date, and end_date. 
+            If it's a comparative chart request, provide all tickers mentioned, start_date, and end_date.
+            For general queries, just provide the ticker. 
+            If a Japanese company or stock is mentioned, identify the 4-digit ticker and append '.T' to it.
+            Respond in JSON format with keys 'query_type' (either 'chart', 'comparative_chart', or 'info'), 'tickers' (list for comparative_chart, single string otherwise), and if applicable, 'start_date' and 'end_date'. 
+            For 'latest' or current data, use today's date. 
+            The user may ask questions in Japanese, so please interpret accordingly."""},
+            {"role": "user", "content": user_input}
+        ],
+        "max_tokens": 200,
+        "temperature": 0.3
+    }
+
+    response = requests.post("https://api.openai.com/v1/chat/completions", json=initial_data, headers=headers)
+    response.raise_for_status()
+    result = response.json()
+    content = result['choices'][0]['message']['content']
+    logger.debug(f"Initial GPT response: {content}")
+    info = json.loads(content)
+
+    # Normalize the key to 'ticker' if 'tickers' is present
+    if 'tickers' in info and 'ticker' not in info:
+        info['ticker'] = info['tickers']
+        del info['tickers']
+
+    if info['query_type'] in ['chart', 'comparative_chart']:
+        # Post-process the date for YTD queries
+        if 'ytd' in user_input.lower():
+            current_year = datetime.now().year
+            info['start_date'] = f"{current_year}-01-01"
+            info['end_date'] = 'latest'
+    elif info['query_type'] == 'info':
+        try:
+            ticker = info.get('ticker', info.get('tickers'))
+            if not ticker:
+                raise ValueError("No ticker found in the response")
+            
+            stock_data = get_stock_data(ticker)
+            
+            # Use GPT to interpret the stock data
+            response = interpret_stock_data_with_gpt(user_input, stock_data)
+            
+            info['response'] = response
+        except Exception as e:
+            logger.error(f"Error processing info query: {str(e)}")
+            logger.error(traceback.format_exc())
+            return get_gpt_fallback_response(user_input)
+
+    logger.debug(f"Processed GPT response: {info}")
+    return info
+
+def interpret_stock_data_with_gpt(user_input, stock_data):
+    if not OPENAI_API_KEY:
+        raise ValueError("OpenAI API key is not set")
+
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {OPENAI_API_KEY}'
+    }
+    
+    prompt = f"""Given the following stock data:
+    {stock_data}
+    
+    Please answer the following user query:
+    {user_input}
+    
+    Provide a concise and informative answer based on the given stock data."""
+
+    data = {
+        "model": "gpt-3.5-turbo",
+        "messages": [
+            {"role": "system", "content": "You are a financial assistant. Interpret the given stock data to answer the user's query accurately and concisely."},
+            {"role": "user", "content": prompt}
+        ],
+        "max_tokens": 150,
+        "temperature": 0.3
+    }
+
+    response = requests.post("https://api.openai.com/v1/chat/completions", json=data, headers=headers)
+    response.raise_for_status()
+    result = response.json()
+
+    if 'choices' not in result:
+        raise ValueError(f"Unexpected API response: {result}")
+
+    return result['choices'][0]['message']['content']
+
+def get_stock_data(ticker):
+    stock = yf.Ticker(ticker)
+    info = stock.info
+    return json.dumps({"info": info})
+
+def get_stock_chart(ticker, start_date, end_date):
+    def parse_date(date_str):
+        if date_str.lower() == 'latest':
+            return datetime.now()
+        parsed_date = datetime.strptime(date_str, '%Y-%m-%d')
+        logger.debug(f"Parsed date {date_str} to {parsed_date}")
+        return parsed_date
+
+    start = parse_date(start_date)
+    end = parse_date(end_date)
+
+    logger.debug(f"Fetching stock data for {ticker} from {start} to {end}")
+    stock = yf.Ticker(ticker)
+    hist = stock.history(start=start, end=end)
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(hist.index, hist['Close'])
+    plt.title(f"{ticker} Stock Price")
+    plt.xlabel("Date")
+    plt.ylabel("Price")
+    plt.grid(True)
+
+    img_buffer = io.BytesIO()
+    plt.savefig(img_buffer, format='png')
+    img_buffer.seek(0)
+    plt.close()
+    
+    return img_buffer
+
+def get_comparative_stock_chart(tickers, start_date, end_date):
+    plt.figure(figsize=(10, 5))
+    
+    for ticker in tickers:
+        stock = yf.Ticker(ticker)
+        if end_date == 'latest':
+            end_date = datetime.now().strftime('%Y-%m-%d')
+        data = stock.history(start=start_date, end=end_date)
+        
+        # Index the stock price to 100 at the beginning of the period
+        indexed_price = data['Close'] / data['Close'].iloc[0] * 100
+        plt.plot(data.index, indexed_price, label=ticker)
+    
+    plt.title("Comparative Stock Performance (Indexed to 100)")
+    plt.xlabel("Date")
+    plt.ylabel("Indexed Price")
+    plt.legend()
+    plt.grid(True)
+    
+    img_buffer = io.BytesIO()
+    plt.savefig(img_buffer, format='png')
+    img_buffer.seek(0)
+    plt.close()
+    
+    return img_buffer
+
+# Modify the existing /stockai route or add a new one if it doesn't exist
+@app.route('/stockai', methods=['GET', 'POST'])
+@login_required
+def stockai():
+    if request.method == 'POST':
+        return process_query()
+    return render_template('stockai.html')
+
+@app.route('/process-query', methods=['POST'])
+@login_required
+def process_query():
+    user_input = request.json['input']
+    logger.debug(f"Received user input: {user_input}")
+    
+    try:
+        info = get_info_from_gpt(user_input)
+        logger.debug(f"Processed info: {info}")
+        
+        if info['query_type'] == 'chart':
+            logger.debug("Recognized as a chart query")
+            ticker = info['ticker']
+            start_date = info['start_date']
+            end_date = info['end_date']
+            logger.debug(f"Generating chart for {ticker} from {start_date} to {end_date}")
+            
+            try:
+                img = get_stock_chart(ticker, start_date, end_date)
+                img_path = f"temp_{uuid.uuid4().hex[:8]}_chart.png"
+                with open(img_path, 'wb') as f:
+                    f.write(img.getvalue())
+                return jsonify({
+                    "message": f"Chart for {ticker} from {start_date} to {end_date} has been generated.",
+                    "image_path": img_path
+                })
+            except Exception as e:
+                logger.error(f"Error generating stock chart: {str(e)}")
+                logger.error(traceback.format_exc())
+                return get_gpt_fallback_response(user_input)
+        
+        elif info['query_type'] == 'comparative_chart':
+            logger.debug("Recognized as a comparative chart query")
+            tickers = info.get('tickers', info.get('ticker', []))  # Try both 'tickers' and 'ticker'
+            start_date = info['start_date']
+            end_date = info['end_date']
+            logger.debug(f"Generating comparative chart for {tickers} from {start_date} to {end_date}")
+            
+            try:
+                img = get_comparative_stock_chart(tickers, start_date, end_date)
+                img_path = f"temp_comparative_{uuid.uuid4().hex[:8]}_chart.png"
+                with open(img_path, 'wb') as f:
+                    f.write(img.getvalue())
+                return jsonify({
+                    "message": f"Comparative chart for {', '.join(tickers)} from {start_date} to {end_date} has been generated.",
+                    "image_path": img_path
+                })
+            except Exception as e:
+                logger.error(f"Error generating comparative stock chart: {str(e)}")
+                logger.error(traceback.format_exc())
+                return get_gpt_fallback_response(user_input)
+        
+        elif info['query_type'] == 'info':
+            return jsonify({"message": info['response']})
+        
+        else:
+            return get_gpt_fallback_response(user_input)
+    
+    except Exception as e:
+        logger.error(f"Error processing query: {str(e)}")
+        logger.error(traceback.format_exc())
+        return get_gpt_fallback_response(user_input)
+
+def get_gpt_fallback_response(user_input):
+    try:
+        response = get_gpt_response(user_input)
+        return jsonify({"message": response})
+    except Exception as e:
+        logger.error(f"Error getting GPT fallback response: {str(e)}")
+        return jsonify({"message": "I'm sorry, but I couldn't process your request at this time. Please try again later."}), 500
+
+@app.route('/get-chart/<path:img_path>')
+@login_required
+def get_chart(img_path):
+    try:
+        return send_file(img_path, mimetype='image/png')
+    finally:
+        @after_this_request
+        def remove_file(response):
+            try:
+                os.remove(img_path)
+                logger.debug(f"Removed temporary file: {img_path}")
+            except Exception as error:
+                logger.error(f"Error removing file {img_path}: {error}")
+            return response
+
+def get_gpt_response(user_input):
+    if not OPENAI_API_KEY:
+        raise ValueError("OpenAI API key is not set")
+
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {OPENAI_API_KEY}'
+    }
+    data = {
+        "model": "gpt-3.5-turbo",
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant specializing in financial and stock market information. Provide a complete response within 250 tokens."},
+            {"role": "user", "content": user_input}
+        ],
+        "max_tokens": 300,
+        "temperature": 0.7
+    }
+
+    response = requests.post("https://api.openai.com/v1/chat/completions", json=data, headers=headers)
+    response.raise_for_status()
+    result = response.json()
+
+    if 'choices' not in result:
+        raise ValueError(f"Unexpected API response: {result}")
+
+    return result['choices'][0]['message']['content'].strip()
 
 if __name__ == "__main__":
     app.run(debug=True)

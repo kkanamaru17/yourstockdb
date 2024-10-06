@@ -122,7 +122,9 @@ translations = {
         'concise_digest_description': "Today's digest shows you just the info you need, including portfolio performance vs the index and a chart of top/worst performers.",
         'get_started': 'Get Started',
         'insights': 'Insights',
-        'insights_description': 'Analyst rating & target price, valuation history, recent share price chart, memo to note down learnings, and much more',        
+        'insights_description': 'Analyst rating & target price, valuation history, recent share price chart, memo to note down learnings, and much more',    
+
+        'ai_assistant': 'AI Assistant',
     },
     'jp': {
         # translations for home and login
@@ -247,6 +249,6 @@ translations = {
         'get_started': '始める',
         'insights': 'インサイト',
         'insights_description': 'アナリスト・レーティング&目標株価、バリュエーション指標、直近株価チャート、投資家としての学びを記録するメモ保存機能、など',
-
+        'ai_assistant': 'AI Assistant',
     }
 }
