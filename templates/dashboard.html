@@ -9,6 +9,28 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="static/styles.css">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <style>
+        .snowflake {
+            position: fixed;
+            top: -10px;
+            color: white;
+            font-size: 1em;
+            font-family: Arial, sans-serif;
+            text-shadow: 0 0 5px rgba(0,0,0,0.3);
+            user-select: none;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        
+        @keyframes snowfall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -130,7 +152,28 @@
         </div>
     </footer>
 
-    <img src="static/images/loopy_halloween.png" alt="Dog" class="dog-image">
+    <img src="static/images/loopy_cool_xmas.png" alt="Dog" class="dog-image">
+
+    <script>
+        function createSnowflake() {
+            const snowflake = document.createElement('div');
+            snowflake.classList.add('snowflake');
+            snowflake.innerHTML = '❅';
+            snowflake.style.left = Math.random() * 100 + 'vw';
+            snowflake.style.opacity = Math.random();
+            snowflake.style.animation = `snowfall ${Math.random() * 3 + 2}s linear forwards`;
+            
+            document.body.appendChild(snowflake);
+            
+            // Remove snowflake after animation ends
+            setTimeout(() => {
+                snowflake.remove();
+            }, 5000);
+        }
+
+        // Create snowflakes at intervals
+        setInterval(createSnowflake, 100);
+    </script>
 
 </body>
 
