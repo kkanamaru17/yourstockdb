@@ -260,6 +260,9 @@ class User(db.Model, UserMixin):
         return str(self.id)
 
 class Stock(db.Model):
+    __table_args__ = (
+        db.Index('idx_user_ticker', 'user_id', 'ticker'),
+    )
     id = db.Column(db.Integer, primary_key=True)
     ticker = db.Column(db.String(10), nullable=False)
     company_name = db.Column(db.String(100), nullable=True)
@@ -492,18 +495,20 @@ def dashboard():
         db.session.commit()
         return redirect(url_for('dashboard'))
     
-    
     stock_data = Stock.query.filter_by(user_id=current_user.id).all()
-
-    # Update latest prices and recalculate return for each stock
-    for stock in stock_data:
-        stock.latest_price = fetch_latest_price(stock.ticker)
-        stock.daily_return = fetch_daily_return(stock.ticker)
-        stock.return_performance = calculate_returns(stock.purchase_price, stock.latest_price)
+    
+    # Batch fetch all stock data
+    tickers = [stock.ticker for stock in stock_data]
+    if tickers:
+        batch_data = fetch_batch_stock_data(tickers)
         
-        # Calculate income gain percentage and convert to Python float
-        income_gain_pct = calculate_income_gain_pct(stock.ticker, stock.purchase_date, stock.purchase_price)
-        stock.income_gain_pct = float(income_gain_pct)  # Convert np.float64 to Python float
+        # Update stock objects with batch data
+        for stock in stock_data:
+            if stock.ticker in batch_data:
+                stock_info = batch_data[stock.ticker]
+                stock.latest_price = stock_info['latest_price']
+                stock.daily_return = stock_info['daily_return']
+                stock.return_performance = calculate_returns(stock.purchase_price, stock.latest_price)
 
     db.session.commit()
 
@@ -513,125 +518,11 @@ def dashboard():
     total_income_gain_pct = sum(stock.income_gain_pct * (stock.purchase_price * stock.shares) / total_cost for stock in stock_data) if total_cost > 0 else 0
     portfolio_return_withincome = portfolio_return + total_income_gain_pct
     
-    # Calculate new metrics
-    # total_value = sum(stock.latest_price * stock.shares for stock in stock_data)
-    # total_income_gain = total_cost * total_income_gain_pct/100
-    # return_value = total_value - total_cost
-    # dividend_value = sum((stock.div_yield / 100) * stock.latest_price * stock.shares for stock in stock_data)
-    # num_stocks = len(stock_data)
-    # winning_stocks = sum(1 for stock in stock_data if stock.return_performance > 0)
-    # win_rate = (winning_stocks / num_stocks) * 100 if num_stocks > 0 else 0
-
-    # if stock_data:
-    #     portfolio_metrics = calculate_portfolio_metrics(stock_data)
-    #     beta = portfolio_metrics['beta']
-    #     alpha = portfolio_metrics['alpha']
-    #     sharpe_ratio = portfolio_metrics['sharpe_ratio']
-    # else:
-    #     beta = alpha = sharpe_ratio = 0
-
-    # Calculate new metrics
-    # today = date.today()
-    # holding_periods = [(stock, (today - stock.purchase_date).days) for stock in stock_data]
-    
-    # if holding_periods:
-    #     avg_days_held = sum(days for _, days in holding_periods) / len(holding_periods)
-        
-    #     longest_held = max(holding_periods, key=lambda x: x[1])
-    #     longest_held_stock, longest_held_days = longest_held
-        
-    #     shortest_held = min(holding_periods, key=lambda x: x[1])
-    #     shortest_held_stock, shortest_held_days = shortest_held
-    # else:
-    #     avg_days_held = longest_held_days = shortest_held_days = 0
-    #     longest_held_stock = shortest_held_stock = None
-
-    # # Prepare data for the chart
-    # fig, ax = plt.subplots(figsize=(12, 8))  # Increased figure size
-
-    # for stock, days_held in holding_periods:
-    #     # Calculate daily returns
-    #     stock_history = yf.Ticker(stock.ticker).history(start=stock.purchase_date, end=today)
-    #     if not stock_history.empty:
-    #         prices = stock_history['Close']
-    #         indexed_prices = (prices / prices.iloc[0]) * 100  # Index to 100 at purchase
-            
-    #         # Plot the line
-    #         ax.plot(range(len(indexed_prices)), indexed_prices, label=stock.ticker)
-
-    # ax.set_xlabel('Days Since Purchase')
-    # ax.set_ylabel('Indexed Price (Purchase = 100)')
-    # ax.set_title('Stock Performance Since Purchase')
-    # ax.grid(True)
-
-    # # Adjust legend
-    # ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=5, fontsize='small')
-
-    # # Adjust layout to make room for the legend
-    # plt.tight_layout()
-    # plt.subplots_adjust(bottom=0.2)
-
-    # # Convert plot to PNG image
-    # img = io.BytesIO()
-    # plt.savefig(img, format='png', bbox_inches='tight', dpi=100)
-    # img.seek(0)
-    # plot_url = base64.b64encode(img.getvalue()).decode()
-
-    # plt.close(fig)  # Close the figure to free up memory
-
-    # Calculate Today's Digest
-    # end_date = datetime.now().replace(tzinfo=None)  # Use naive datetime
-    # start_date = end_date - timedelta(days=5)  # Fetch 5 days to ensure we get the last trading day
-
-    # Function to get the last trading day's performance
-    # def get_last_trading_day_performance(ticker):
-    #     stock = yf.Ticker(ticker)
-    #     hist = stock.history(start=start_date, end=end_date)
-    #     if len(hist) >= 2:
-    #         # Ensure the index is timezone-naive
-    #         hist.index = hist.index.tz_localize(None)
-    #         last_close = hist['Close'].iloc[-1]
-    #         prev_close = hist['Close'].iloc[-2]
-    #         return (last_close - prev_close) / prev_close * 100
-    #     return 0
-
-    # Calculate portfolio performance
-    # portfolio_performance = 0
-    # total_value = sum(stock.latest_price * stock.shares for stock in stock_data)
-    # for stock in stock_data:
-    #     stock_performance = get_last_trading_day_performance(stock.ticker)
-    #     stock_value = stock.latest_price * stock.shares
-    #     portfolio_performance += stock_performance * (stock_value / total_value) if total_value > 0 else 0
-
-    # # Get Nikkei 225 performance
-    # nikkei_performance = get_last_trading_day_performance('^N225')
-
-    # Calculate total income gain percentage (weighted average)
-    # total_income_gain_pct = sum(stock.income_gain_pct * (stock.purchase_price * stock.shares) / total_cost for stock in stock_data) if total_cost > 0 else 0
-
     return render_template('dashboard.html', 
-                           stocks=stock_data, 
-                           portfolio_return=portfolio_return, 
-                           portfolio_return_withdiv=portfolio_return_withdiv,
-                        #    total_value=total_value,
-                        #    return_value=return_value,
-                        #    dividend_value=dividend_value,
-                        #    num_stocks=num_stocks,
-                        #    win_rate=win_rate,
-                        #    beta=beta,
-                        #    alpha=alpha,
-                        #    sharpe_ratio=sharpe_ratio,
-                        #    avg_days_held=avg_days_held,
-                        #    longest_held_stock=longest_held_stock,
-                        #    longest_held_days=longest_held_days,
-                        #    shortest_held_stock=shortest_held_stock,
-                        #    shortest_held_days=shortest_held_days,
-                        #    performance_chart=plot_url,
-                        #    portfolio_performance=portfolio_performance,
-                        #    nikkei_performance=nikkei_performance,
-                        #    total_income_gain_pct=total_income_gain_pct,
-                           portfolio_return_withincome=portfolio_return_withincome)
-                        #    total_income_gain=total_income_gain)
+                         stocks=stock_data,
+                         portfolio_return=portfolio_return,
+                         portfolio_return_withdiv=portfolio_return_withdiv,
+                         portfolio_return_withincome=portfolio_return_withincome)
 
 @app.route('/portfolio', methods=['GET', 'POST'])
 def portfolio():
@@ -1346,6 +1237,48 @@ def get_gpt_response(user_input):
         raise ValueError(f"Unexpected API response: {result}")
 
     return result['choices'][0]['message']['content'].strip()
+
+@cache.memoize(timeout=900)  # 15 minutes cache
+def fetch_batch_stock_data(tickers):
+    data = {}
+    try:
+        # Fetch data for all tickers in one call
+        batch_data = yf.download(tickers, period="2d")
+        
+        for ticker in tickers:
+            if len(batch_data) >= 2:
+                latest_price = batch_data['Close'][ticker].iloc[-1]
+                prev_price = batch_data['Close'][ticker].iloc[-2]
+                daily_return = ((latest_price - prev_price) / prev_price) * 100
+                data[ticker] = {
+                    'latest_price': round(float(latest_price), 2),
+                    'daily_return': round(float(daily_return), 2)
+                }
+    except Exception as e:
+        print(f"Error in batch fetch: {e}")
+    return data
+
+@cache.memoize(timeout=3600)  # Cache for 1 hour
+def fetch_batch_dividend_data(tickers, start_date):
+    dividend_data = {}
+    try:
+        for ticker in tickers:
+            stock = yf.Ticker(ticker)
+            dividends = stock.dividends
+            if not dividends.empty:
+                dividends.index = dividends.index.tz_localize(None)
+                dividends_after_purchase = dividends[dividends.index >= start_date]
+                dividend_data[ticker] = dividends_after_purchase.sum()
+    except Exception as e:
+        print(f"Error fetching dividend data: {e}")
+    return dividend_data
+
+@app.route('/api/stock-updates', methods=['POST'])
+@login_required
+def get_stock_updates():
+    tickers = request.json['tickers']
+    batch_data = fetch_batch_stock_data(tickers)
+    return jsonify(batch_data)
 
 if __name__ == "__main__":
     app.run(debug=True)

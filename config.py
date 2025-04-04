@@ -10,3 +10,14 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(days=5)
     # Optionally, you can control the "remember me" cookie lifetime
     REMEMBER_COOKIE_DURATION = timedelta(days=5)
+
+    # Add Render-specific configurations
+    if os.environ.get('RENDER'):
+        # Optimize database connection pool for Render's free tier
+        SQLALCHEMY_POOL_SIZE = 2
+        SQLALCHEMY_MAX_OVERFLOW = 2
+        SQLALCHEMY_POOL_TIMEOUT = 30
+        
+        # Cache configuration
+        CACHE_TYPE = 'SimpleCache'
+        CACHE_DEFAULT_TIMEOUT = 900  # 15 minutes in seconds
