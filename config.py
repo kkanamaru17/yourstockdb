@@ -21,3 +21,6 @@ class Config:
         # Cache configuration
         CACHE_TYPE = 'SimpleCache'
         CACHE_DEFAULT_TIMEOUT = 900  # 15 minutes in seconds
+        # Increase worker timeout
+        WORKER_TIMEOUT = 120  # 2 minutes
+        WORKER_MAX_REQUESTS = 1000
